@@ -1,0 +1,40 @@
+Comparison of Semaphores & Monitors:
+
+Monitors               | Semaphore
+-----------------------|----------------
+locks                  | Binary Semaphore
+condition variable     | See below
+L.lock();              |
+while(!cond)           | sem.down(); // don't surround with a lock!
+	cv.wait.(L);   |
+L.unlock();            |
+
+What if cond doesn't map well to testing an integer? Well...
+
+// semaphore code
+
+semaphore mutex(1);
+queue<semaphore*> waitingSems;
+
+...
+
+// moral equivalent of "wait"
+mutex.down();				// L.lock();
+while(!cond) {				// while(!cond) { 
+	semaphore s(0);			// wait
+	waitingSems.push(&s);		// ...
+	mutex.up();			// ...
+	s.down();
+	mutex.down();
+}
+<critical section>			// same
+mutex.up();				// L.unlock();
+
+// moral equivalent of "signal"
+mutex.down();
+<critical section>
+while (!waitingSems.empty()) {
+	waitingSems.front()->up();
+	waitingSems.pop();
+}
+mutex.up();

@@ -1,0 +1,67 @@
+Semaphores
+
+// need to delete the stack
+
+1) Restroom problem using semaphores:
+
+int women_active;
+int men_active;
+int women_waiting;
+int men_waiting;
+
+semaphore women_waiting_sem{0};
+semaphore men_waiting_sem{0};
+
+semaphore mutex{1};
+
+// list<semaphore*> men_waiting;
+
+void woman_wants_to_enter(){
+	mutex.down();
+
+	if(men_active) {
+		women_waiting++;
+		mutex.up();
+		women_waiting_sem.down();
+		mutex.down();
+	} else {
+		women_active++;
+	}
+
+	mutex.up();
+}
+
+void woman_leaves(){
+	mutex.down();
+
+	women_active--;
+
+	if(!women_active){
+		while(men_waiting--) {
+			men_waiting_sem.up();
+			men_active++;
+		}
+	}
+
+	mutex.up();
+}
+
+2) Barrier Synchronization
+
+const auto N{42}; // numRunners
+
+semaphore numReady{0};
+semaphore staerted{0};
+
+void starter() {
+	for (i = 0; i < N; i++)
+		numReady.down();
+	
+	for (i = 0; i < N; i++)
+		started.up();
+}
+
+void runner() {
+	numReady.up();
+	started.down();
+}

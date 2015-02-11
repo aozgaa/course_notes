@@ -1,0 +1,177 @@
+Yield:
+
+The context of the old thread has to be stored somewhere, and
+the context of the new thread has to be loaded somewhere.
+
+Who does that work?
+
+thread1 {
+	print "start thread 1"
+	yield()
+	print "end thread 1"
+}
+
+
+thread2 {
+	print "start thread 2"
+	yield()
+	print "end thread 2"
+}
+
+yield(int threadNum) {
+	print "start yield (thread%d)", threadNum
+	// switch to next thread
+	swapcontext();
+	print "end yield (thread%d)", threadNum
+}
+
+thread 1				thread2
+--------------------------------------------------------
+start thread 1
+start yield (thread 1)
+					start thread 2
+					start yield (thread 2)
+end yield (thread 1)
+end thread 1
+					end yield (thread 2)
+					end thread 2
+
+
+swapcontext() does the work of storing away and loading a context,
+and most of the work is coordinated through through the yield()
+function.
+
+How to Create a New Thread:
+1) allocate & initialize a new stack
+	(c++: new)
+2) allocate & initialize a new Thread Control Block
+	Initialize the General Purpose Registers
+	Stack pointer points to top of stack
+	PC points to first code instruction
+3) Add the thread to the Ready Queue
+
+This is different from fork (Unix)! This is all done within a fixed
+address space rather than a new one.
+
+
+This is enough to cpu::init, thread::thread, and thread::yield
+
+Single processor, no interrupt:
+
+	 call
+Parent -------->           ----------> ...
+
+child           ---------->
+
+
+
+multi-processor
+
+Parent -------->---------------------> ...
+
+child           ---------->
+
+
+What a join looks like:
+
+
+Parent -------->-----------|---------> ...
+			   ^
+child           ---------->/
+
+parent(){
+	create child thread
+	print "parent works"
+	<wait for child>
+	print "parent continue"
+}
+
+child(){
+	print "child works"
+}
+
+Desired output:
+
+
+1	           -or-			2
+--------------------------------------------------------
+parent works				child works
+child works				parent works
+parent continues			parent continues
+
+What asusmptions do we need to make?
+
+Single processor
+Schedulers is not FILO -- must be FIFO
+No pre-emptions
+
+Throwing yield() into a non-critical section should not affect its correctness,
+just its run-time behavior.
+
+parent(){
+	create child thread
+	lock()
+	print "parent works"
+	wait(lock)
+	print "parent continue"
+	unlock
+}
+
+child(){
+	lock
+	print "child works"
+	signal
+	unlock()
+}
+
+doesn't work if child gets the lock first (????)
+
+how about with semaphores?
+
+parent(){
+	lock()
+	childDone=0
+	unlock();
+
+	create child thread
+
+	lock();
+	print "parent works"
+	while(! childDone)
+		wait()
+	print "parent continue"
+	unlock();
+}
+
+child(){
+	lock()
+	print "child works"
+	childDone = 1;
+	signal();
+	unlock()'
+}
+
+Reasoning about thread interleaving is annoying. Why don't we just
+make a thread wait until another thread finishes?
+
+Answer: join()
+
+void parent(){
+	child = creat child thread;
+	lock
+	print parent works
+	unlock
+	child.join()
+	lock
+	print
+	...
+	unlock();
+}
+
+void child(){
+	lock
+	print
+	unlock
+}
+}
+

@@ -1,0 +1,33 @@
+class cv {
+
+	mutex cv_m;
+	list<ucontext_t*> blockedThreads;
+
+	void wait(&mutex m){
+
+		// need interrupts disabled -- can't call mutex!
+
+		m.unlock();  // needs to come afterwards???
+		cv_m.lock(); // swapping order amy cause deadlock
+		
+		// add this context to blocked threads
+
+		cv_m.unlock(); 	// don't want to block other threads
+				// from looking at cv_queue;
+
+		// need to get guard variable ???
+		// swap to next waiting thread
+		// asserts
+		// release guard variable
+		
+		m.lock();
+	}
+
+	void signal(){
+	cv_m.lock();
+
+	// ????
+
+	cv_m.unlock();
+	}
+};

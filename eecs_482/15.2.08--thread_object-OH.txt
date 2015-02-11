@@ -1,0 +1,26 @@
+OH questions:
+
+-- test_and_set()? atomic<bool> guard.
+
+
+How to wake cpu's? When another cpu is interrupted/managing threads.
+Eg: # of running threads goes down to one, thebn a broadcast/signals wake
+a bunch of threads.
+
+-- How does a thread enter the ready queue?
+Supposing mutex/cv has some internal data about blocked threads...
+nvm.
+
+What should a thread do when it finishes? What does it mean for a thread to execute
+when the thread object is destroyed? By thread object, does the spec mean its context?
+
+What does it mean to destroy a thread object?
+Thread object is object of the thread class. Thread_impl* is a heap-allocated object.
+We can destroy the thread object without deleting thread_impl, and vice versa. Want to
+keep thread_impl around as long as the thread isn't done computing. On the other hand,
+if there are references to the thread object (eg: t2 wants to join t1, even though t1
+finished executing long ago), the object should remain in scope.
+
+
+#include <unistd.h>
+sleep(); // busy??

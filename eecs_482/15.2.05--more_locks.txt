@@ -1,0 +1,165 @@
+// lock v3. single processor, no busy wait
+
+bool status = free;
+
+void lock(){
+	disable_interrupt();
+	if (status == free)
+		status = busy;
+	else {
+		// if we enable interrupts, this is bad
+		add thread to wait queue;
+		swtich to next thread;
+	}
+	enable_Interrupt();
+}
+
+void unlock(){
+	disable_interrupt();
+	
+	status = free;
+
+	if (!threadQueue.empty()) {
+		move thread from waiting to ready
+		status = busy;
+	}
+
+	enable_Interrupt();
+
+}
+
+// doesn't work at all on a multi-processor.
+
+if I structure my code to hold the following invariant,
+by code could be correct
+
+1) Must disable interrupts before a context switch
+
+2) Must enable interrupts before returning after gettin control after a context switch
+
+3) interrupts should be enabled while use code is running
+
+Example:
+
+ThreadA, ThreadB are running.
+
+
+A						B
+-----------------------------------------------------------------------------------------
+					|	yield()					|
+					|		disable_interrupt(); *		|
+					|		switch context;			|
+enable_interrupt(); *			|						|
+<do work>				|						|
+lock()					|						|
+	disable_interrupt(); **		|						|
+	switch constext;		|						|
+					|		enable_interrupt(); **		|
+					|	<do work>				|
+					|	unlock();				|
+					|						|
+...					|	...					|
+					|						|
+-----------------------------------------------------------------------------------------
+
+
+Special cases for these invariants:
+Making a thread
+Destroying a thread
+
+
+
+Project Hints:
+1) Textbook is useful
+
+
+
+
+
+
+yield(){
+	disable_interrupt();
+	
+	switch threads();
+
+	enable_interrupt();
+
+}
+
+
+// multiprocessr, "no busy wait"
+// busy wait just long enough to run os code, not user code
+bool status = free;
+bool guard = 0;
+
+void lock(){
+	disable_interrupt();
+
+	while(test_and_set(guard));
+
+	if (status == free)
+		status = busy;
+	else {
+		// if we enable interrupts, this is bad
+		add thread to wait queue;
+		swtich to next thread;
+	}
+
+	guard = 0;
+
+	enable_Interrupt();
+}
+
+void unlock(){
+	disable_interrupt();
+	
+	while(test_and_set(guard));
+
+	status = free;
+
+	if (!threadQueue.empty()) {
+		move thread from waiting to ready
+		status = busy;
+	}
+
+	guard = 0;
+
+	enable_Interrupt();
+
+}
+
+For multi-processors, we need to extend (1),(2) to test_and_set() the guard
+
+This is called a spin-lock.
+
+hint:
+1) The textbook is useful
+2) looking at swapcontext, uclink seems really useful.
+	The problem is, this fundamentally starts to break the guarantee that you swap back to where you came.
+	uclink will break the last 5% of tet cases because we can't get the control we need.
+	Using it, you can get very far before hitting the dead end.
+3) Use swapcontext whenever you want to switch a thread.
+
+
+DEADLOCK:
+
+Resource is anything a thread demands whose availability is finite
+(eg: lock, shared data, compute time, i/o)
+
+Deadlock is when resources is reserved cyclically so progress can't be made.
+
+Dining Philosophers Problem:
+Philosophers sit at a round table, one chopstick between each philospher
+(need 2 to eat). How to organize them?
+
+Grabbing chopstick on left and then on right could lead to deadlock.
+
+Solutions:
+1) Let it go: operating system doesn't nothing to help you -- waiting threads use few resources.
+2) Detect deadlock and then fix them: detecting just requires drawing the resource dependency graph
+	and checking if there is a cycle. Fixing it is hard: (a) kill the thread? (b) transactional memory?
+3) Prevent the deadlock: There are 4 conditions essential for a deadlock to occur:
+	a) Need to be waiting for a limite resource.
+	b) All threads involved need to be holding some resource & waiting
+	c) Resourced can't be pre-emptable
+	d) Circular chain of hold/wait requests

@@ -1,0 +1,77 @@
+
+// (1) Restroom Access
+int numMen = 0;
+int numWomen = 0;
+
+cv waitingMen;
+cv waitingWomen;
+
+mutex L;
+
+// solve starvation by preventing women/men entering
+// once a woman/man has left
+
+// changes to man/woman procedures done only for women
+enum turn = MEN;
+int numWaitingMen;
+int numWaitingWomen;
+
+class Bathroom {
+public:
+	static void UseBathroom();
+};
+
+void man_wants_to_enter() {
+	L.lock();
+	while(numWomen > 0) {
+		waitingMen.wait(L);
+	}
+	numMen++;
+	L.unlock();
+}
+
+void man_leaves{
+	L.lock();
+	numMen--;
+	if (numMen == 0)
+		waitingWomen.broadcast();
+	L.unlock();
+}
+
+void 
+
+void woman_wants_to_enter() {
+	L.lock();
+	numWaitingWomen++
+	while(numMen > 0 || turn == MEN) {
+		waitingWomen.wait(L);
+	}
+	numWaitingWomen--;
+	numWomen++;
+	L.unlock();
+}
+
+void woman_leaves() {
+	L.lock();
+	numWomen--;
+
+	if (numWaitingMen > 0 && turn == WOMEN)
+		turn = MEN;
+
+	if (numWomen == 0)
+		waitingWomen.broadcast();
+	L.unlock();
+}
+
+// (2) Locks:
+// Need m locks. But this often isn't optimal, since
+// there is an overhead to locks.
+
+// (3) FileAccess
+// exactly what you would think --
+// keep track of the sum of the priorities
+// of the threads reading the file, and broadcast
+// at the end.
+
+// (4) Barrier
+// HW: write this out.

@@ -1,0 +1,90 @@
+Dealing with Deadlock:
+
+-- Key Idea: prevent deadlocks by preventing the conditions
+that allow deadlock to occur!
+
+Conditions necessary for deadlock:
+1) Limited resources
+2) Hold & wait()
+3) No pre-emptions
+4) Circular chain of requests
+
+Solutions:
+
+1) Buy more resources until we have more than we would ever need.
+
+2) One approach:
+// Get all reources we could need.
+
+while (!done)
+	work
+	
+// release all resources
+
+//dining philosophers
+
+mutex L;
+void philosopher(){
+	L.lock();
+	while(left_chopstick.busy() || right_chopstick.busy())
+		wait();
+	
+	// pick up left chopstick
+	// pick up right chopstick
+
+	L.unlock();
+
+	<EAT>
+
+	L.lock();
+
+	// put down chopsticks
+	broadcast();
+
+	L.unlock();
+}
+
+Problem: philosopher might starve.
+
+3) Can't pre-empt everything. eg: locks.
+
+4) Enforce a global ordering on acquiring resources
+
+eg: for dining philosophers, order the chopsticks clockwise (is this important)?
+
+Consider the thread T that holds the maximal resource, then T can make forward progress.
+If T2 acquires a higher number resource, then T2 can make progress. At any given point,
+the thread with the maximal resource can make progress, so deadlock will not occur.
+
+Banker's Algorithm:
+keep track of each threads potential requests, current requests, and the system's
+available resources.
+
+---------------------------------
+
+Project2 Advice:
+
+Make a good test case suite
+Ask intructors for helpwith diagnosing failed test cases
+
+---------------------------------
+
+Schedulers:
+
+-- Fair (FIFO, equal runtimes, something else -- up to implementation)
+
+-- low response time
+
+-- high throughput
+
+-- (deadlines)
+
+-----------------------------------
+
+Scheduler Algorithms:
+
+FCFS (First-come, first served):
+FIFO without pre-emptions
+
+Round Robin:
+FIFO with pre-emption

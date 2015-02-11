@@ -1,0 +1,85 @@
+Lock rwLock;
+
+// shared data
+int numReaders = 0;
+int numWriters = 0;
+
+// before readerStart returns, we want
+// numWriters = 0;
+cv waitingReaders;
+
+// before writerStart returns, we want
+// numReaders + numWriters = 0;
+cv waitingWriters;
+
+
+void ReaderStart(){
+	rwLock.lock();
+	while (numWriters > 0){               // better to be defensive and do != 0?
+		waitingReaders.wait(rwLock);
+	}
+	numReaders++;
+
+	rwLock.unlock();
+}
+
+void ReaderFinish(){
+	rwLock.lock();
+	numReaders--;
+
+	/* ------- BAD! ------- */
+	// waitingReaders.signal();            // all readers looking to read were woken by the broadcast
+	                                       // haven't changed anything that would make a writer reeady to go.
+
+	if (numReaders == 0){                  // optimization -- avoids spurious signals
+		waitingWriters.signal();
+	}
+	rwLock.unlock;
+}
+
+void WriterStart(){
+	rwLock.lock();
+	while(numReaders + numWriters > 0) {
+		waitingWriters.wait(rwLock);
+	}
+	waitingWriters++;
+	rwLock.unlock();
+}
+
+void WriterFinish(){
+	rwLock.lock();
+	numWriters--;
+	waitingReaders.broadcast();             // want to wake many threads
+	waitingWriters.signal();
+	rwLock.unlock();
+}
+
+// a solution to the starvation problem:
+// prevent new readers from getting in while there are waiting Writers;
+
+int numWaitingWriters = 0;
+
+void WriterStart(){
+	rwLock.lock();
+	numWaitingWriters++;
+	while(numReaders + numWriters > 0) {
+		waitingWriters.wait(rwLock);
+	}
+	numWaitingWriters--;
+	waitingWriters++;
+	rwLock.unlock();
+}
+
+void ReaderStart(){
+	rwLock.lock();
+	while (numWriters > 0 || numWaitingWriters > 0) {
+		waitingReaders.wait(rwLock);
+	}
+	numReaders++;
+
+	rwLock.unlock();
+}
+
+// ...but this just starves the readers!
+// Another solution is to use a queue to manage readers & writers
+// covered in discussion.

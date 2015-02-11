@@ -1,0 +1,86 @@
+Semaphores:
+
+built on top of lower-level hardware abstractions like atomic loads and stores
+
+class semaphore {
+private:
+	int value;
+public:
+	semaphore(u_int u): value(u) {}
+	void up(){
+		// atomically
+		value++;
+		// in a binary semaphore, replace the above line with
+		value = 1;
+	}
+
+	void down(){
+		// atomically
+		do {
+			if (value > 0) {
+				value--;
+				break;
+			}
+		} while(1);
+	}
+
+};
+
+// Mutual exclusion with a semaphore:
+
+semaphore s(1);
+
+s.down();
+<critical-section>
+s.up();
+
+
+// Memory Barrier with a semaphore:
+
+semaphore s(0);
+
+void func1(){
+	<first executed>
+	s.up();
+}
+
+void func2(){
+	s.down();
+	<second executed>
+}
+
+// mutex with a semaphore (coke machine example):
+
+const int maxNumCokes = N;
+
+semaphore mutex(1);
+semaphore fullSlots(0);
+semaphore emptySlots(maxNumCokes);
+
+void Consumer() {
+	fullSlots.down();
+	mutex.down();
+	DrinkCoke();
+	mutex.up();
+	emptySlots.up();
+}
+
+void Producer() {
+	emptySlots.down();
+	mutex.down();
+	AddCoke();
+	mutex.up();
+	fullSlots.up();
+}
+
+// if mutex is outside the fullSlots/emptySlots procedures,
+// then we could get stuck holdiong the mutex but unable to progress
+
+// with given solution, atomicity is embedded in fullSlots procedures
+
+// since semaphore.up() is non-blocking, their order doesn't matter
+
+// this solution works with multiple producers & consumers (why?)
+
+// semaphores have memory (an internal state) so there is no way
+// to miss waking up

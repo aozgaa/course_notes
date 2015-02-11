@@ -1,0 +1,88 @@
+Abstraction Layers:
+
+---------------------------------------------------------
+Concurrent Programs					|
+							|
+---------------------------------------------------------
+high level synchronization				|
+	operation (locks, monitors, semaphores)		|
+							|
+---------------------------------------------------------
+low-level atomic operations				|
+	load/store					|
+	disable/enable interrupt			|
+	test_and_set					|
+---------------------------------------------------------
+
+We'll start with atomicity on a uniprocessor.
+
+How does a thread get switched out?
+	internal events (yield,wait,lock,...)
+	external events (interrupts, including timers)
+		Can be disabled
+
+Can't expose interrupts to users because:
+	stops everyone else
+	interrupt are kernel mode, users CANT use them
+	allowing use interrupts gives users the ability to crash the
+	computer. easily.
+	Hard to make more than one lock.
+
+
+An implementation of lock
+
+... assuming we are on a uniprocesor with busy waits
+
+(we will later do multiprocessors & without busy waits)
+
+
+
+// uniprocessor, busy wait
+
+bool Status {
+	FREE,
+	BUSY
+} status;
+
+lock(){
+	diable interrupts
+	while(status != free) {
+		enable interrupts		// breaks on if timer interrupt
+		disable interrupts		// signal
+	}
+	status = BUSY;
+	enableInterrupts;
+}
+
+unlock(){
+	disable interrupts			// uneccesary with atomic load/store
+	status = FREE
+	enable interrupts
+}
+
+atomic read-modify-write
+
+want to atomically:
+	read a value from memory to register
+	write a new walue to memory
+
+
+eg:
+teat_and_set X					// X a memory location
+	tmp = X
+	X = 1
+	return tmp
+
+// multi-processor, busy wait
+
+lock() {
+	while (test_and_set(status) == 1) ;
+}
+
+unlock(){
+	status = 0;
+}
+
+
+
+

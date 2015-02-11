@@ -1,0 +1,162 @@
+A System for Correct Concurrent Code
+1. List all the shared data in the system.
+	Data accessed by more than one thread where at least one access is a write,
+	I/O used by threads
+2. Group the shared data and assign locks to each group
+	Fewer locks are simple to reason about
+  ... but there is a performance hit
+	Deadlock can be a problem with many threads (covered later).
+	Start with the smallest number of locks, 
+  and then refine them until you have good enough performance.
+	On project 1,2,3, you can get away with a single lock/monitor
+3. Check that code using shared data has the approriate locks
+4. Put lock,..., unlock in the code (could be pseudo-code or rudimentary code at this point).
+5. List before and after conditions
+	Write the condition in code by assigning condition variable for each condition
+		cv usually relies on some piece of shared state
+			need to acquire the lock to make this check
+6. Add waits (in a while loop).
+7. Add signals/broadcasts whenever you alter conditions
+
+Example:
+
+L.lock();
+while (!some_condition)
+	cv.wait(L);
+<do stuff>
+cv.signal();
+cv2.broadcast();
+L.unlock();
+
+DO NOT signal.broadcast in the while loop -- unecessarily wakes up threads, 
+they can feedback eachother and waste time. Can also miss actually important signals.
+
+Producer-Consumer Paradigm
+
+	    Queue
+             [x]
+             [x]
+             [x]
+Producer ->  [x] -> Consumer
+             [x]
+             [x]
+             [x]
+
+
+If the queue fills up, the producer has to wait before printing more. (the bounded buffer problem)
+If you overload the coke machine, bad things happen.
+
+
+1. Shared Data
+the coke machine
+class coke_machine {
+	AddCoke();
+	DrinkCoke();
+};
+int numCokes;
+
+const int maxCokes = N;
+
+//Before we drink coke, there must be > 0 cokes
+cv waitingConsumers;
+//Before we add coke, there must be < maxCokes cokes.
+cv WaitingProducers;
+
+lock L;
+
+
+//Unsynchronized code
+Consumer(){
+	DrinkCoke();
+	numCokes--;
+}
+
+Producer(){
+	AddCoke();
+	numCokes++;
+}
+
+// Better -- Agrees with solution
+void Consumer(){
+	L.lock();
+	while (!numCokes > 0) {
+		waitingConsumers.wait(L);
+	}
+	DrinkCoke();
+	numCokes--;
+	waitingProducers.signal();
+	L.unlock();
+}
+
+void Producer(){
+	L.lock();
+	while(!numCokes < maxCokes) {
+		waitingProducers.wait(L);
+	}
+	AddCoke();
+	numCokes++;
+	waitingConsumers.signal();
+	L.unlock();
+}
+
+// Producer works in a loop
+void Producer(){
+	while(1) {
+		L.lock();
+		while(!numCokes < maxCokes) {
+			waitingProducers.wait(L);
+		}
+		AddCoke();
+		numCokes++;
+		waitingConsumers.signal();
+		L.unlock();
+	}	
+}
+
+Can we move the "while(1)" inside the lock/unlock sections? 
+Yes, and its more efficient in this case (fewer lock/unlocks).
+It could be worse if we had some performance-intensive work 
+between the while loop and the lock.
+
+A use for broadcast: the condition variable has many types
+of threads, and you need to wake a particular type.
+	Redesigning the locks/cv's can often eliminate this problem.
+
+Reader-Writer Locks:
+
+Sample code:
+
+// Reader
+L.lock();
+readData();
+L.unlock();
+
+// Writer
+L.lock();
+WriteData();
+L.unlock();
+
+This doesn't have enough concurrency, since multiple reads
+don't conflict with eachother -- we want to avoid multiple writes
+and read/writes occuring concurrently.
+
+A reader-writer lock keeps track of how many readers and writers there are
+at a time, and allows multiple readers to access the file.
+Maintains the invariant the numReaders == 0 or numWriters == 0 at any given time.
+
+// SharedData
+int numReaders, numWriters;
+
+Lock rwLock;
+
+// before writerStart returns, numReaders == 0
+void writerStart() {
+
+}
+
+// before readerStart returns, numWriters == 0
+void readerStart() {
+
+}
+
+HW: fill in the functions

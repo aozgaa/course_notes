@@ -1,0 +1,86 @@
+A Memory Model:
+
+
+
+Each thread gets it private state:
+
+  Processor       Thread1                           Thread2
+ -----------     ------------------------------
+ |         |     | Code                       |
+ -         -     | Stack                      |
+ -         -     | PC                         |      ...
+ -         -     | SP                         |
+ -         -     | General Purpose Register   |
+ |         |     |                            |
+ -----------     ------------------------------
+
+...but loading the code each time we load a thread is redundant, and
+It's not worth keeping the stack locally either, so we just keep pointers
+in the local context.
+
+A thread is either running, blocked, or ready
+
+             -----> Running -------| I/O();
+             |         |           | wait();
+ schedule(); |         |preempt(); | down();
+             |         |           | lock();
+             |         v           v
+           Ready <------------- Blocked
+	            signal();
+                    up();
+                    unlock();
+                    I/O Event
+
+Internal Event:
+systemcall();
+
+External Event:
+interrupts
+
+Context Switch is full of nasty little tricks:
+
+Eg:
+
+// bad
+100  save pc
+101 switch to next thread
+
+// better
+100 save pc + 2
+101 switch to next thread
+102 next instr
+
+Note: swapContext() takes care of this problem.
+
+// some code ???
+void Thread1() {
+	print "Start T1"
+	yield();
+	print "End T1"
+}
+
+void Thread2() {
+	print "Start T2"
+	yield();
+	print "End T2"
+}
+
+void yield() {
+	print "Start yield-(thread/.d)"
+	swapContext();
+	print "End yield-(thread/.d)"
+}
+
+Sample output:
+Start T1
+start yield (thread 1)
+Start T2
+start yield (thread 2)
+End yield (thread 1)
+End T1
+End tiled (thread 2)
+End T2
+
+Lookup pre-emptive threading package
+
+
