@@ -1,0 +1,115 @@
+Deadlock Exercises:
+
+
+Necessary conditions:
+-- limited resources
+-- hold & wait
+-- no preemption (ie: no can take away resources held)
+-- circular chain of requests
+
+Example code:
+
+void transfer_money(int from_account_id, int to_account_id, int amount);
+
+/*
+ * An array of lockas that ranges over account numbers.
+ * locks[i] = lock for account i
+ */
+vector<mutex> locks;
+
+// bad solution
+void transfer_money(int acct1, int acct2, int amount) {
+	thread_lock(locks[acct1]);
+	thread_lock(locks[acct1]);
+
+	// transfer money
+
+	thread_unlock(locks[acct1]);
+	thread_unlock(locks[acct1]);
+
+}
+
+1) How can this deadlock?
+what if acct1 wants to transfer to acct2 and acct2 wants to transfer to acct1?
+acct1 == acct2
+
+2) Make it deadlock free by removing the circular chain of request condition.
+
+vector<mutex> locks;
+
+void transfer_money(int acct1, int acct2, int amount) {
+	assert(acct1 != acct2);
+	int acct_min = min (acct1, acct2);
+	int acct_max = max (acct1, acct2);
+
+	thread_lock(locks[acct_min]);
+	thread_lock(locks[acct_max]);
+
+	// transfer money
+
+	thread_unlock(locks[acct_min]);
+	thread_unlock(locks[acct_max]);
+
+}
+
+3) Attack the hold-and-wait condition instead.
+
+vector<mutex> locks;
+vector<bool>  isFree;
+mutex         guard;
+cv            waiting;
+
+// bad solution
+void transfer_money(int acct1, int acct2, int amount) {
+	guard.lock();
+	while ( ! (isFree[acct1] && isFree[acct2]))
+		waiting.wait(guard);
+
+	locks[acct1].lock();
+	locks[acct1].lock();
+
+	isFree[acct1] = isFree[acct2] = false;
+
+	guard.unlock();
+
+	// transfer money		// don't really need the locks anymore, but
+					// maybe the transfer requires the locks
+
+	locks[acct1].unlock();
+	locks[acct2].unlock();
+
+	guard.lock();
+
+	isFree[acct1] = isFree[acct2] = true;
+
+	waiting.broadcast();
+
+	guard.unlock();
+}
+
+-------------------------------------------
+
+Resource Allocation is Initialization (RAII)
+
+lock_guard is a useful tool (for project 2 and beyond -- exam?)
+
+
+void foo(){
+	lock_guard()<mutex> guard;
+
+
+	throw exception e;
+
+	If (cond) return;
+
+	...
+
+}
+note: don't need to make a destructor/unlock call (unlock is called every time we leave the scope).
+
+Consider making such a guard for interrupts, or the guard variable.
+
+
+
+
+}

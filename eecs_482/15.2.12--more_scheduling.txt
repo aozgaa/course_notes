@@ -1,0 +1,73 @@
+More Scheduling:
+
+-----------------------------------
+
+Shortest Time to Completion First (STCF):
+
+Whenever a job comes int, check if it will take shorter to finish, and if it is, switch to that job.
+Whenever a job finishes/there is a pre-empt, switch to the job that will take the shortest time.
+
+
+Pro: 
+-- theoretically optimal response time (in both with/without pre-empt case)
+	Proof: just count.
+
+Cons: 
+-- requires knowledge of run-times
+-- starvation problem for low-priority (ie: long) jobs
+
+------------------------------------
+
+What about disk accesses?
+
+If we interrupt often, we can run other jobs while the first thread waits for a disk request.
+
+Suppose C makes disk requests, and A,B take a long time:
+
+Round Robin can make many switches while the disk access occurs:
+
+
+CPU:	| C | A | B | A | B | C | A | B | ...  
+	|--------------------------------------------------------
+Disk: 	|   |       C       |   |       C       | ...
+
+STCF will keep the same (second) task running for the entire disk access
+(assuming all jobs are issued at the beginning)
+
+
+CPU:	| C |       A       | C |       A       | ...  
+	|--------------------------------------------------------
+Disk: 	|   |       C       |   |       C       | ...
+
+
+------------------------------------
+
+Earliest Deadline First (EDF)
+
+-- every job comes in with a deadline, schedule them by deadline.
+
+Optimal if all the jobs can be completed by their deadline
+... but might be very bad otherwise
+
+Example:
+
+	| Runtime	| Deadline
+-----------------------------------
+A	| 15		| 20
+B	| 10		| 30
+C	| 5		| 10
+
+
+Workload:
+   0   5   10   15   20   25   30   35   40   45   50   55   60 
+A  x    ------------->          x----     ---->
+B  x                  ---------->           x  ---------->    ...
+C  x--->                             x---->
+
+EDF is the first model for real-time systems. There is a LOT more to this field.
+EG: linux implements both soft real-time (no starving) and hard real-time scheduling.
+Used by video players and car brake systems, repectively.
+
+
+
+END OF MATERIAL FOR MIDTERM

@@ -1,0 +1,92 @@
+Address Space:
+
+Essential for providing the shared memory abstraction for inter-thread communication.
+
+
+Recall the memory heirarchy abstraction:
+
+|--------------------------------|
+|		Apps             |
+|--------------------------------|
+|		 OS		 |
+|--------------------------------|
+|		 HW  		 |
+|--------------------------------|
+
+Apps see:
+
+1) Address independence: same numeric address used for different pieces of memory
+2) Memory protection: processes can't access other process' data
+3) Virtual memory: apps see more memory than actually exists
+
+---------------------------------------
+
+Uniprogramming:
+
+one app runs at a time. A contexrt switch to a thread in another app
+involves saving the entire app state to physical memory before loading all
+the data for the second app.
+
+Cost of a context switch is prohibitive.
+
+---------------------------------------
+
+Multiprogramming:
+
+OS now ensures address independence
+
+linker-loader does address translation
+
+If we simply offsett addresses into block and then offset, then we
+don't get protection because the program can ask for garbage memory addresses and get
+a reference outside the program's allocated space:
+
+3000	|------------------|
+	|	 OS	   |
+2000	|------------------|
+	|	app2	   |
+1000	|------------------|
+	|	app1	   |
+0	|------------------|
+
+If app1 asks for address 1004, it will get into app2'a address space
+If app2 asks for address -4, it will get into app1's address space
+
+Managed langauges can figure out if accesses are legal or not by controlling/limiting
+how the use can ask for data at addresses.
+C/C++ and native langauges don't have this luxury.
+
+So we need something better...
+
+-------------------------------------
+
+Address Translator.
+
+|-----------------|	 |------------|      |------------------|
+| virtual address |  ->  | translator |  ->  | physical address |
+|-----------------|	 |------------|	     |------------------|
+
+
+
+
+
+Translator needs to be:
+1) fast
+2) able to contain translation data
+3) flexible (1 app, many apps, etc.)
+
+Base & Bound Algorithm:
+
+Hardware keep registers with base & bound values:
+
+int base;
+int bound;
+
+char translate(int va){
+	if(va > bound) {
+		os.trap();
+	} else {
+		pa = va + base;
+	}
+	return pa;
+}
