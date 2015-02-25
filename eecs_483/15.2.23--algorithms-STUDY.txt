@@ -96,6 +96,52 @@ The general method is an obvious extension of this.
 
 -----------------------------------------------------
 
+Generating LL(1) grammars:
+
+FIRST(X)
+	do
+		If X is a terminal, return {X}
+		If X -> Y_1 Y_2 ... Y_n is a production and Y_1 ... Y_m are e
+			add FIRST(Y_{m + 1}) to X.
+		If X -> e is a production, add e.
+	until nothing is added to any FIRST sets.
+
+FOLLOW(X)
+	Add $ to FOLLOW(S)
+	If there is a rule A -> aBC
+		add FIRST(C) to FOLLOW(B)
+	if there is a rule A -> aB
+		add FIRST(A) to FOLLOW(B)
+	if there is a rule A -> aBC and e is in FIRST(C)
+		add FIRST(A) to FOLLOW(B)
+
+Use the follow sets to fill in the parse table. To process input:
+
+Initialize stack with start symbol and $
+Make substitutions to top of stack based on parse table and next
+symbol of intput. "Cancel" out terminals on the top of both stacks. Repeat until either
+(1) both stacks are empty,
+(2) a parse table is empty, or
+(3) one of the stacks isn't empty.
+
+The latter two conditions are failures.
+
+Suppose A -> x | y (where x,y are symbol strings). A grammar is LL(1) iff
+
+1) FIRST(x) and FIRST(y) are disjoint
+
+2) if y derives e, then x doesn't derive a string beginning eith a terminal in FOLLOW(A).
+Ie: if e in FIRST(y) then FIRST(x) and FOLLOW(A) are disjoint.
+
+The conditions can be compressed into:
+
+FIRST(x FOLLOW(A)) and FIRST(y FOLLOW(A)) are disjoint.
+
+A grammar with left-recursion or which admits left-factoring is not LL(1),
+but can be converted into one which might be LL(1) -- or not.
+
+-----------------------------------------------------
+
 Generating LR(0)/SLR(0) grammars:
 
 Let '.' denote our position within the rule.
@@ -146,7 +192,14 @@ items(G')
 	return C
 
 In processing, we build up a stack of our working area, and reduce according the the
-stack contents. If it is possible that the stack might be 
+stack contents. In SLR(0), no shift/reduce or reduce/reduce conflicts are allowed:
+
+shift/reduce: if B -> a . and A -> a . X b are in the same item set, then if B's FOLLOW
+set contains X, there is a conflict.
+
+If A -> a . and B -> b . are in the same item set and their FOLLOW sets aren't disjoint,
+there is a conflict.
+
 
 Example:
 If we have
@@ -164,6 +217,26 @@ A_1  -> . B_1
      |  . B_m
 ...
 
+SLR(k) grammars can resolve conflicts by looking ahead $k$ tokens.
+
+LR(0) grammars must decide whether to shift or reduce solely based on the working-area stack contents.
+
 ----------------------------------------------------
 
+Static Scoping:
 
+The scope of the a variable is the innermost scope where that identifier was defined.
+
+Functions declared outside a class have the scope of their definition, regardless of where they are invoked.
+Functions declared inside a class call first members inside their present class, then their super class,
+then super super class, ..., then the scope of the method's invocation, etc.
+With multiple inheritance (eg: C++), either
+(1) the parent classes don't share an identifier, so the reference is unambiguous, or
+(2) the parent classes share an identifier, so the reference needs to be annotated (ie: Base1::foo).
+
+Implemented using spaghetti stacks -- a singly linked list where the head of the list is the top of the stack.
+
+Dynamic Scoping:
+
+Keep a stack of environments at runtime and resolve identifiers by traversing the environments until a
+match is found, or report an error (think Scheme).
