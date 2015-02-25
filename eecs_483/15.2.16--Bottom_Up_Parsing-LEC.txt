@@ -1,0 +1,68 @@
+Bottom-Up Parsing:
+
+First view: Building a syntax tree from the leafs, and establishing the root at the end (recursively)
+
+Second view: build a stack of semi-parsed elements as we read in elements from a stream. 
+Semi-parsed elements can either be tokens or variables. If the parse is successful, as
+the stack should only contain the root (and possibly and end marker).
+
+Note that this is a right-most derivation.
+
+Third View:
+
+Each step is a shift or a reduction. We reduce a substring of the sentential form back to a
+non-terminal.
+
+A "handle" is a substring that matches the body of a production, and whose reduction
+represents one step along the reverse of a rightmost derivation.
+
+A left-to-right, bottom-up parse works by iteratively searching for a handle, then 
+reducing the handle.
+
+S => aBc	|				^
+		|				|
+...		| (rightmost derivation)	| (reduction)   
+		|				|
+  => abc	v 				|
+
+For a parser, the input is all terminals. To reverse the derivation, each step of
+the corresponding reduction applies the reverse of the derivation on the rightmost symbol(s)
+of the stack.
+
+The bottom/up parsers we consider are called shift/reduce parsers.
+These contrast with the LL(1) predict/match parser.
+
+in order to make a shift/reduce parser, we need to answer a few questions:
+a) Where is the next handle?
+b) How do we search for possible handles?
+c) How do we pick a particular handle from a list of candidates?
+
+-------------------------------------------------------------
+
+Find Where Handles Are:
+
+Key Idea: split the input into two parts:
+1) Left substring (stack) is the work area; all handles are processed here
+2) Right substring: token stream not yet read.
+
+A shift consists of pushing the next token onto the stack.
+
+A reduce consists of popping some number of symbols from the stack, and replacing
+them with a variable. 
+Note, we can only produce one variable in a single reduce step, and we must include the
+top of the stack in the reduction (can's "skip" over the top of the stack).
+
+-------------------------------------------------------------
+
+Finding Candidate Handles:
+
+At any step in the parsing process, the contents of the LHS of the praser
+can be described as follows:
+a) trace out, form the start symbol, the series of productions that have
+not yet been completed and where we are in each production.
+b) for each production, in order, output all of the symbols up to the point
+where we change from one production to the next.
+
+
+
+

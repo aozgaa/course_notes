@@ -1,0 +1,169 @@
+Compiler Algorithms
+----------------------------------------------------
+
+NFA to DFA:
+
+Powerset construction.
+
+----------------------------------------------------
+
+DFA to Minimal DFA:
+
+Prune unreachable states and reduce to one trap state.
+Then:
+
+Naive: Pick pairs of states & check for L-equivalence on the pairs.
+
+Better: Partition states into L-equivalence classes & refine choices,
+then use Myhill-Nerode constructrion once done refining.
+
+----------------------------------------------------
+
+Regex to NFA:
+
+Use gadgets.
+
+----------------------------------------------------
+
+Removing dangling else:
+
+To match else's to innermost if's, note that in any if/else sequence,
+there are the matched if statements, and unmatched statements, and that
+the matched statements lie strictly inside the unmatched statements. That is,
+there is a distinguished "transition" in the sequence of nesting beyond which all
+if's are matched to an else.
+
+Noting such structure can help disambiguate grammars.
+
+----------------------------------------------------
+
+Eliminating Left recursion of CFG:
+
+A -> Aa | b
+
+becomes:
+
+A  -> bA'
+A' -> aA' | e
+
+where e is the empty string (we use this convention throughout the remainder
+of the notes).
+
+In general, group all productions that begin with the variable and those that don't. ie:
+
+A -> Aa_1 | ... | Aa_n | b_1 | ... | b_m
+
+where a_i,b_i are symbol strings, and the b_i don't begin with A.
+
+Then we get
+
+A  -> b_1 A' | ... | b_m A'
+A' -> a_1 A' | ... | a_n A'
+
+pseudo-code:
+
+Remove e-transitions.
+Remove cycles (rules A => ... => A).
+
+Order the rules, 1 to n.
+for i = 1 to n
+	for j = 1 to i - 1
+		replace rules A_i -> A_j b by
+		A_i -> a_1 b | ... | a_m b
+		where b is a symbol tring and the a_k are A_j's productions
+		(Essentially, replace variables that appeared earlier in the 
+		 ordering if they start the present rule)
+	Eliminate immediate left recursion
+
+Completing the inner loop changes all left recursions between A_i and A_j into immediate left recursions,
+where j <= i.
+
+----------------------------------------------------
+
+Left Factoring:
+
+Suppose we have
+
+A -> aB | aC
+
+If we are reading a token stream left-to-right, we don't know which rule to pick.
+We can defer the choice until later by factoring over the common prefix. We get:
+
+A -> aA'
+A' -> B | C
+
+The general method is an obvious extension of this.
+
+-----------------------------------------------------
+
+Generating LR(0)/SLR(0) grammars:
+
+Let '.' denote our position within the rule.
+
+If
+
+A -> aBc
+
+is a rule, then we have associated items to A:
+
+A -> . aBc
+A -> a . Bc
+A -> aB . c
+A -> aBc . 
+
+We want to make an automaton that uses collections of items (item sets) 
+to determine where we might be in a derivation.
+
+We build item sets using two procedures: CLOSURE and GOTO.
+
+Suppose I is an item set, and X some symbol (terminal or variable).
+
+CLOSURE(I)
+	add I's elements to CLOSURE(I)
+	Until no new elements are added:
+		for each rule A -> a . Bc in I, where A,B are non-terminals
+			add B-> . B_1 | ... | . B_n to CLOSURE(I),
+			where the B_i are B's productions.
+
+GOTO(I,X)
+	If A -> a . XBc is in I, then add A -> aX . Bc to GOTO(I,X)
+
+
+To build the automaton, find the closure of the start symbol, and compute all goto sets
+and their closures until no more are added. We need to build the canonical item sets.
+In pseudocode:
+
+G' is the grammar G with an augmented start rule S' -> S
+
+items(G')
+	C = { CLOSURE({ S' -> S }) }
+	repeat
+		for each set of items I in C
+			for each grammar symbol X
+				if GOTO(I,X) is not empty
+					add GOTO(I,X) to C
+	until no new sets of items are added to C in a round
+	return C
+
+In processing, we build up a stack of our working area, and reduce according the the
+stack contents. If it is possible that the stack might be 
+
+Example:
+If we have
+
+S   -> A_1 | ... | A_n
+A_1 -> B_1 | ... | B_m
+
+the first state of our automaton is
+
+S    -> . A_1
+     | ...
+     | . A_n
+A_1  -> . B_1
+     | ...
+     |  . B_m
+...
+
+----------------------------------------------------
+
+

@@ -4,12 +4,12 @@ A System for Correct Concurrent Code
 	I/O used by threads
 2. Group the shared data and assign locks to each group
 	Fewer locks are simple to reason about
-  ... but there is a performance hit
+	... but there is a performance hit
 	Deadlock can be a problem with many threads (covered later).
 	Start with the smallest number of locks, 
-  and then refine them until you have good enough performance.
+	and then refine them until you have good enough performance.
 	On project 1,2,3, you can get away with a single lock/monitor
-3. Check that code using shared data has the approriate locks
+3. Check that code using shared data has the appropriate locks
 4. Put lock,..., unlock in the code (could be pseudo-code or rudimentary code at this point).
 5. List before and after conditions
 	Write the condition in code by assigning condition variable for each condition

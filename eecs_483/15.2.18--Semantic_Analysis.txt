@@ -1,0 +1,24 @@
+Semantic Analyis:
+
+Goals:
+
+-- Determine what variables are meant by each identifier
+-- build an internal representation of inheritance heirarchies
+-- get a count of variables in scope at each point.
+
+Topics:
+
+Scope-Checking:
+-- How can we tell what object a particular object refers to?
+-- How do we store this info?
+
+Type-Checking:
+
+--------------------------------------------------------
+
+Scope:
+
+the scope of a variables are the parts of the program where and identifier
+refers to that variable.
+
+A sybmol table is a tables mapping identifier to variables in a given scope.

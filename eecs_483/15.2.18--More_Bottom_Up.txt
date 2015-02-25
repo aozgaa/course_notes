@@ -1,0 +1,43 @@
+LR(0) Parsing:
+
+Left-right, lookahead 0.
+
+We have an automaton that tracks our progress through the productiion rules, and
+the transition arrows are the top symbol on the stack.
+
+Recall that a reudction on the stack needs to use the top symbol! This weakens the grammars
+recognized.
+
+How to build the automaton:
+
+1) Start at  . S
+2) Add the closure of . S to your state
+3) add transitions based on the top symbol of the stack
+4) Take the closure
+5) repeat...
+
+(only a finite number of states/edges, so this algorithm eventually terminates)
+
+The automaton keeps both a working symbols (terminals & non-terminals) stack
+and a "computation history" stack, so we know where to return to when we perform a reduction.
+When we perform a reduction, we pop the first few symbols off the working stack, replace them
+by the reduction rule at the top of the stack, and go back one step in the computation.
+
+Every state must either have shift rules, or one reduction rule, but not both.]
+
+-------------------------------------------------------------------
+
+LR Conflicts/
+
+A shift/reduce conflict is when a state has both a shift rule and a reduce rule
+(it is unclear which to take)
+
+A reduce/reduce conflict is when there are multiple ways to reduce the top elements of the stack.
+
+LR(0) parsers don't provide a facility for performing such a reduction.
+
+-------------------------------------------------------------------
+
+SLR(1) Parsing:
+
+Transitions are based on lookahead token instead of top of stack

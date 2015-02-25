@@ -38,8 +38,6 @@ void man_leaves{
 	L.unlock();
 }
 
-void 
-
 void woman_wants_to_enter() {
 	L.lock();
 	numWaitingWomen++
