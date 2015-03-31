@@ -1,0 +1,14 @@
+Resident and Non-resident Pages:
+
+Effects of page size:
+Each page needs extra bits to track whether the page is resident, valid, etc.
+Let's estimate the amount of overhead to ~4 bytes.
+So a page size of 4 bytes yields a 100% overhead.
+
+If the page is large, then we may over-allocate memory for a program.
+
+Page size is chosen by the hardware.
+
+Benefits of paging:
+	Don't need to allocate the entire virtual address space when the program starts.
+	the "big void" is unallocated when the program starts.

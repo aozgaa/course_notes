@@ -1,0 +1,54 @@
+Address Spaces:
+
+------------------------------------------
+
+Recall:
+
+Uniprogramming:
+	run only one program at a time --
+	we need to load/store all of a program's memory at once
+
+multi-programming:
+	many programs use the adress space at once.
+	any system that isn't embedded uses multi-programming.
+	MUST use address-space translation because programs can't know the
+		physical address they will use at compile time.
+	Can be resolved statically, by a linker/loader.
+		Can't use register offset addressing because the running
+			program can over-write another program's memory.
+	Can be resolved dynamically, by a pager.
+		Can do a dynamic check on the validity of the address
+			Used in managed runtimes.
+			In general, too slow, so must use hardware.
+		Base-and-bounds was a method for this.
+	
+
+--------------------------------------------
+
+Pro/Con's of Base and Bound
+
+Pro:
+Adding memory is easy -- increase the bound
+
+Con:
+Can't move the base down when another process finishes
+	Must copy the entire physical memory elsewhere, then
+	adjust the base, then move everything down.
+
+Don't actually get virtual memory -- can't exceed physical memory with bound
+Processes can't share memory usefully.
+Over time, wastes lots of memory due to external fragmentation.
+
+Fragmentation example:
+
+1000	-----------------
+	|		|
+	|		|
+	|		|
+	|		|
+	|		|
+	|		|
+	|		|
+	|		|
+0	|		|
+	-------------------

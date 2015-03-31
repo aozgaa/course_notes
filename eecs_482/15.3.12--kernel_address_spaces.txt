@@ -1,0 +1,78 @@
+Kernel Level Address Spaces
+
+In project 2, library code ran on the same stacks as user level code.
+We shared an address space.
+
+In the VAX ISA, the kernel can manipulate the page table by read/writing its virtual
+memory. The hardware then needs to translate the addresses. Easier for kernel
+developers, harder for harware developers.
+
+In project 3, the library (kernel) has a separate address space. Page tables are
+in virtual memory that is managed by Linux. This resembles VAX.
+
+Addressing trick:
+
+	-------------------------
+	|   Virtual Memory	|
+	|			|
+	|			|
+	|  |-------------|	|
+	|  | pm_phys_mem |	|
+	|  |-------------|	|
+	|			|
+	|			|
+	|			|
+	|			|
+	|			|
+	-------------------------
+
+
+--------------------------------------------------------------
+
+Protection:
+
+Processes can't even name memory belonging to other processes,
+except for shared data.
+
+In order to accomplish this, we use some translation mechanism.
+User-level processes can't see/modify the translation data,
+or else they would be able to circumvent the mechanism.
+
+So, the kernel is the only process able to modify the translation
+data directly. We need to be able to track whether the running
+process is the kernel or user code.
+
+So, we need a kernel/user mode bit. But how do we stop user-level
+code from modifying the mode bit?
+
+There are two types of kernel code. 
+
+1) Interrupts (eg: page fault, timer, yield).
+In this case we onlu go to very specific parts of the kernel (ie: the handlers).
+So, the hardware can aotmically change the mode bit whenever the handler starts.
+
+2) User level invokes kernel processes. Then we got to kernel code and swap the mode bit.
+We DONT stay in user-level code. Examples are calling fork(), doing I/O, rebooting the machine, etc.
+Linux has ~350 system calls.
+
+The procedure:
+-- set mode bit to kernel
+-- switch to kernel stack
+-- push registers onto the kernel stack
+-- change page table base register (PTBR) to point to kernel page table
+-- jump to exception handler for the event/syscall that occured
+
+(all done atomically by the hardware)
+
+-----------------------------------------------------------------
+
+Summary:
+
+Want to hide memory
+
+-- use address translation to hide addresses
+-- restrict modifying address translation to kernel, via mode bit
+-- ???
+
+kernel gets special prvileges because it runs first and gets to set up
+things as it wants.

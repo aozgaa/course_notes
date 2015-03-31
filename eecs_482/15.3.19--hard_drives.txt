@@ -1,0 +1,124 @@
+
+Disks:
+
+The disk geometry is very complex.
+The abstraction hardware developers offer is that nearby
+blocks are "close" w/r/t to access time.
+
+The time spent on a disk access is:
+1) Queue time
+2) Overhead
+	-- seek
+	-- rotational delay
+3) Access
+	Size of access / Transfer rate
+
+
+Efficiency of disk = (transfer time) / (positioning time + transfer time)
+
+50% efficiency is a reasonable goal.
+
+-----------------------------------------------------------
+
+Scheduling on disks:
+
+First-Come First-Served (FCFS)
+-- pro: simple, fair
+-- con: lots of scanning
+
+Shortest Seek-Time First
+-- pro: simple, good disk overhead usage (though suboptimal)
+-- con: unfair, starvation potential
+
+Elevator Algorithms (SCAN). The head sweeps left to right and back, 
+servicing requests if they are in the pass.
+pro: somewhat fair (except for edge-effects), decent performance
+
+------------------------------------------------------------
+
+Solid State Drives (SSD's):
+
+random read: 25 ns
+seq read: 30 ns
+page program: 300 ns
+block erase: 2 ms
+
+Over-writes: very expensive.
+
+Much faster on reads, but same ballpark with the block-erase for writes.
+
+SSD's are much lower power. Useful for mobile devices.
+Better schock resistance.
+
+Lower capacity / $.
+
+Flash cells wear out. 
+
+Flash translation layer is analogous to a log-structured file system (coming soon).
+
+------------------------------------------------------------
+
+Other options (research):
+
+memristors, ???
+
+------------------------------------------------------------
+
+File Systems:
+
+A file system is a persistent data structure built on top of the disk abstraction.
+
+Persistence: data is in a consistent state at all times, data lasts even if
+the device fails (power outage).
+
+Persistent data should not depend on temporary data, like virtual addresses.
+
+Interface:
+
+Create a a file
+
+Delete a file
+
+Read <file,offset>
+
+Write <file,offset>
+
+Misc. tasks
+
+
+Some truisms:
+
+-- most accesses are reads
+-- most programs access files sequentially & completely
+-- most files are small, but large files take up the majority of space
+
+File systems stores file attributes (aka metadeta) about each file. eg:
+1) file size
+2) last access time
+3) permission bits
+4) owner
+5) logical block number (lbn)
+
+file-name is NOT part of the metadata. It is part of the directory.
+
+Root of a file is called (in unix) the index node, or inode.
+Contains metadata, info about how to access the file.
+
+---------------------------------------------------------------
+
+Moral equivalents to virtual memory:
+
+base-and-bound <--> contiguous allocation
+-- inode just stores lbn.
+Pros: simple, sequential access wins
+Cons: fragmentation is horrible.
+
+Segmentation for vm <--> Extent.
+Cons: same as segmentation.
+
+Paging for vm <--> each inode contatins a translation table.
+Pro: no fragmentation
+Cons: cost of accessing random blocks is expensive,
+	size of inode varies.
+
+multi-leevl page table <--> multi-level indexed file.

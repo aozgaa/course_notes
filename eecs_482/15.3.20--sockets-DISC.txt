@@ -1,0 +1,53 @@
+Sockets:
+
+Two types:
+
+User Datagram Protocol (UDP):
+-- send "datagram" packets
+-- no ordering provided
+-- no reliability
+-- minimial, so low overhead
+
+Transmission Control Protocol:
+-- stream of data (abstraction)
+-- ordering maintained
+-- guarantees delivery if possible
+
+
+Technologies:
+
+HTTP  TLS/SSL
+  \     /
+   \   /
+    TCP  UDP
+     \    /
+      \  /
+       IP
+       /
+     Eth0
+     
+* HTTPS is HTTP using SSL *
+
+----------------------------------------------------
+
+Interface:
+
+
+//
+// initiate a connection
+//
+FILE* accept(socket, IO);
+
+send(conn, buffer, size, flags);
+
+recv(conn, buffer, size, flags);
+
+Need to worry about endian-ness
+	Networking is all big-endian.
+	Most desktop computers have both big-endian and little-endian mode.
+	Methods for changing endian-ness:
+		nohs()
+		hstor()
+
+Make sure you close your connection when you are done. Otherwise you will run out
+of available file descriptors.

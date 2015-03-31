@@ -111,9 +111,9 @@ FOLLOW(X)
 	If there is a rule A -> aBC
 		add FIRST(C) to FOLLOW(B)
 	if there is a rule A -> aB
-		add FIRST(A) to FOLLOW(B)
+		add FOLLOW(A) to FOLLOW(B)
 	if there is a rule A -> aBC and e is in FIRST(C)
-		add FIRST(A) to FOLLOW(B)
+		add FOLLOW(A) to FOLLOW(B)
 
 Use the follow sets to fill in the parse table. To process input:
 
@@ -218,6 +218,7 @@ A_1  -> . B_1
 ...
 
 SLR(k) grammars can resolve conflicts by looking ahead $k$ tokens.
+LR(k) grammars 
 
 LR(0) grammars must decide whether to shift or reduce solely based on the working-area stack contents.
 

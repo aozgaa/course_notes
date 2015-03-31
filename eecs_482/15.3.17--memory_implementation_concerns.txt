@@ -1,0 +1,135 @@
+Multi-processor issues.
+
+Should we use a global or local replacement policy?
+(global or local to the running process? to the processor?)
+
+There is a tradeoff between performance and fairness.
+
+Global is typically used because it is easier to implement, and easier
+top optimize performance for the whole system.
+
+--------------------------------------------------------------
+
+Once physical memory fills up completely, additional memory allocations
+cause page faults. The systems slows to a crawl (99% hit rate can cause many order
+of magnitude slowdown). How to solve this problem?
+
+1) Buy more DRAM.
+2) Run fewer processes at a time.
+
+Given a process T, let WorkingSet(T) denote the set of pages
+referenced within the last k seconds (some fixed k). This
+can be approximated using a clock that sweeps accross at a constant speed.
+
+A Balance Set is a collection of Working Sets that fit into memory.
+
+------------------------------------------------------------------
+
+Unix Process creation:
+
+2 steps:
+
+-- System calls to start a process:
+	1) fork() creats a copy of current process
+	2) exec() replaces current address space with exec.
+-- any problems with child being an exact clone of parent?
+
+fork() returns 0 is the process is the child, and the pid of the spawned child
+to the parent.
+
+So, fork() calls look like
+
+if(fork() == 0) {
+	exec();   /* child */
+} else {
+	/* parent */
+}
+
+Avoiding work on fork():
+
+Copying the entire address space is expensive.
+
+Instead, unix uses "copy-on-write"
+-- assign reference count to each physical page
+-- when a process writes to a physical page that has a reference count > 1, copy that physical apge somewhere else,
+	and update that process' page table
+-- if refcount = 1, allow read/writes freely
+
+Project hint: need to keep a reference count for shared pages.
+
+----------------------------------------------------------
+
+Creating a shell
+
+Parent should wait for child to finish
+-- use the waitpid() call (similar to thread_join() but for processes)
+-- read man page for details
+-- signature:
+	long waitpid(pid_t pid, int* status, int options)
+	
+-- ????
+-- int close()
+-- int dup2()
+
+Mechanisms for inter-process communication
+-- network sockets
+-- shared memory
+-- unix sockets
+-- pipes
+-- and many more...
+
+Pipes: ideal for producer-consumer relationships
+-- bounded buffer of characters
+-- int pip(ints fds[2]);
+-- 1st descriptor is for reading, second is for writing
+-- pipe exists ONLY in the creators address space
+-- how can other processes use it?
+	??
+
+------------------------------------------------------------
+
+User-level memory protection:
+Can be used to:
+
+-- provide read-only access to undtrusted code (CGI)
+-- stack guards
+-- garbage collection
+
+Example: faster loops
+
+Suppose we have a loop that rarely executes a branch, eg:
+
+for (int i = 0; i < 1000000; i++)
+	array[i == 256 ? 0 : i];
+
+mprotect() changes the protection of memory (by a user)
+
+Signals:
+
+siganls are virtual interrupts
+OS uses signals to notify processes of events
+-- timer expiration, <C-c>, etc.
+-- also invalid accesses
+	default behavior is to kill the process
+	but, process can ask to be notified instead
+-- process register signal handler function
+	OS calls it when signal happens
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+-------------------
+
+PROJECT: how to do a clock eviction? need to be able to know where the page lies in physical memory.

@@ -1,0 +1,89 @@
+Midterm:
+
+For regrades, ask Abhay before Friday. Write info on a cover sheet.
+He can regrade the entire exam.
+
+Median/average: 67 out of 90
+
+Final will be cumulative
+
+-------------------------------------------------------
+
+Runtime Environment:
+
+Next stage of the compiler is Intermediate Representation (IR) Generation.
+
+-- don't worry about optimizing, creating assembly, etc.
+
+Why? 
+-- Easier to optimize than machine code, optimization are cleaner, clearer.
+-- front-end and back-end are decoupled.
+
+IR is the transition from high-level programming language contructs
+to assembly-level structures
+
+The Runtime Environment is the collection of data structures
+maintained to implement high-level structures
+-- stack
+-- heap
+-- static area
+-- vtables
+-- etc.
+
+-------------------------------------------------------
+
+Encoding Types
+
+Instruction Set Architecture (ISA) typically only supports some primitive types
+(eg: int, double)
+
+In the IR, we have these primitive types. Pointers are typically just ints
+storing the address of their datum
+
+Arrays:
+
+C-style. A[0] is just a pointer
+Java. Array has a pointer and a size
+D. Have a start pointer and a past-the-end pointer.
+
+Multidimensional Arrays:
+
+Typically an array of arrays.
+
+In C, the minors keep data locality.
+
+Pointer arithemtic for a[i][j] is as you would expect.
+
+In Java, pointer arithmetic requires a correction for the size datum.
+
+------------------------------------------------------
+
+Functions
+
+????
+
+An Activation tree is a tree whose nodes are functions 
+and whose children are those functions called by that function.
+
+A graph with all possible function calls (generated statically) is called a
+call graph.
+
+If a function's context can't be referenced after it returns, then execution
+can merely store an activation stack. The formal requirements are:
+
+Every activation record has either
+(i) finished executing, or
+(ii) is an ancestor of the currently executing record
+
+Note closures (returning functions that use the environment in which they were
+created) violate the above invariant! Allowing closures requires an activation tree.
+
+A control link is a pointer to a functions caller.
+(used to return control to the caller)
+
+An activation link is a pointer to a function's parent in the activation tree.
+(used to access the parent context)
+
+Another way to break the stack invariants is to use coroutines
+(ie: functions that can yield)
+

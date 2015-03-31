@@ -1,0 +1,84 @@
+Discussion Topics:
+
+Computation Tableaus and Complexity Classes:
+
+Cook-Levin shows 3SAT is NP Complete.
+
+Defn: PSPACE is the set of languages that admit TM's using polynomial space
+Note, P,NP \subset PSPACE
+
+Defn: EXP is the set of languages admitting 2^{n^c} time DTM's.
+
+NEXP, EXPSPACE,NEXPSPACE are analogous.
+
+Exercise:
+NP \subset PSPACE.
+(hint: consider an NP-complete langauge we know of,
+or just work from basic constructions)
+PSPACE = NPSPACE
+
+Theorem. TQBF is PSPACE-complete.
+Track adjacent configurations, except instead track paths of length 2^i (inductively)
+and use quantifiers to make the encoding.
+
+
+Defn. a boolean cicruit is a collection of gates labelled input, or, and, or not where
+input has indegree 0, or/and have indegree 2, and not has indegree 1. There is a distnguished vertex
+that is the output vertex (outputs 0 or 1).
+
+A circuit with n bits of input induces a subset of $\Sigma^n$ in the obvious way (outputting 1 on input x is a yes,
+outputting 0 is a no).
+
+Defn. A circuit family is {C_n}_{n \in \N} such that C_n is a circuit with n bits of input. 
+
+A circuit family induces a language in the obvious way
+
+Defn. P/poly is the set of languages that admit circuit families of polynomial size.
+
+Theorem. P \subset P/poly.
+
+Suppose L \in P. let M be a poly time oblivious TM for L. Then M's computation uses a polynomial
+number of steps whose snapshots use some polynomial amount of space. Fix n an input size. We construct C_n by giving
+one vertex per spot on the computation tableau, and wire up the circuit to compute a vertex based on the values
+of the previous snapshot.
+
+Exercise. Make this rigorous, check the circuit is polynomial sized (we have p(n)^2 vertices, you must bound the number
+of edges. Hint, this is similar to Cook-Levin, "computation is local").
+
+Exercise. A language is sparse provided that there is a polynomial function p(n) so that |L \cap \Sigma^n| <= p(n) for all n.
+Show that if L is sparse, then L is in P/poly.
+
+Exercise [Mahaney, 1980]. Show that if L is sparse and L is NP-complete, then P = NP.
+
+Exercise. Describe an undecidable language that is in P/poly.
+
+Exercise. Describe a decidable langauge that is in P/poly \ P.
+
+
+Defn. NP/poly is the set of languaes that admit circuit families of polynomial size that take as input (x,y) where
+x is the string to be tested, and y is a certificate. The circuit family satisfies that, for x \in \Sigma^n,
+x \in L iff there is a y so that (x,y) is accepted by C_n.
+
+Theorem. NP is a subset of NP/poly.
+
+Proof. Same construction.
+
+Exercise. Let CHK-SAT be the language of circuits that have an input which makes them accept. Ie,
+circuits that are satisfiable. Show that CHK-SAT is NP-complete.
+
+Proof. certificate is the satisfying input. Previous construction can be adapted to show we are NP-hard.
+
+Defn. A circuit family {C_n}_{n \in \N} is P-uniform if there is a TM M computing 1^n \to C_n in poly time.
+
+Theorem. The class of languages that admit P-uniform circuits is P.
+
+Proof. P \subset P/poly above generated P-uniform circuits. For the other direction, let the TM first compute
+the appropriate.
+
+Exercise. For languages A and B, we say A is implicitly logspace reducible to B iff there is a reduction from A to B that uses
+logarithmic space w/r/t the input size to output one bit of the reduction (given an instance and an index, the TM prints
+the bit of the output instance at the given index using logspace). Prove that logspace reductions are transitive.
+
+Exercise. Which of the above results hold under logspace reductions? Prove the ones that do.
+
+--------------------------------------------------------------------

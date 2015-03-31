@@ -1,0 +1,18 @@
+TYPE CHECKING
+
+----------------------------------------------
+
+A types is
+-- a set of values
+-- a set of operations on those values
+
+eg: int is -2^31 to 2^31 and an operation is addition.
+
+Static type-checking. Analyze the program at compile time.
+Dynamic type-checking. Analyze the program at run time.
+
+Strong type systems prevent all type errors.
+Weak type systems allow type errors at runtime.
+
+Note, C/C++ are weakly typed! eg:
+printf() accept variable-length arguments

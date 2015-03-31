@@ -1,0 +1,96 @@
+Journal Files System:
+
+-- LFS, NTFS, extFS
+
+In a log-based file system, existing data kept in a "store"
+and new data is stored in a log,
+Con: data needs to be written twice, once to log, and once to store.
+
+Idea: Get rid of the store.
+
+Assumption: writes are more frequent than reads.
+Why is this reasonable?
+Large memory means we rarely go to disk.
+
+Certain devices have differents costs for read/writes.
+Eg: reads are fast on flash memory, but writes can be very expensive.
+
+Idea: disk is a write-only log.
+
+Then the log looks like:
+
+|---------------------------------------------
+| Data' | Data'' | Data''' | ...
+|---------------------------------------------
+
+Problem: we need to update the inode.
+
+Solution: create the inode at the head of the log:
+
+|---------------------------------------------
+| Data' | Data'' | inode '' | Data''' | ...
+|---------------------------------------------
+
+But then we still need to update the dir entry:
+
+|----------------------------------------------------------------------------
+| Data' | Data'' | inode '' | Dir '' | parent Dir '' | ... | Data''' | ...
+|----------------------------------------------------------------------------
+
+So we need to update inodes proportional to the depth of the tree. This will
+work, but seems prohibitively expensive.
+
+Idea: keep an inode map. Then we just need to update the inode map.
+key is an indoe number.
+entry is the logical block number of the latest version of the inode.
+
+Idea: make the inode map a "superblock" and store a persistent version at a checkpoint region.
+Idea: amortize the cost of going to the checkpoint by buffering it.
+
+Now the disk looks like:
+
+ Checkpoint Version:
+|-----------|
+| Inode Map |
+|-----------|
+|     |     |
+|     |     |
+|     |     |
+|-----------|
+
+                          temp ---\
+                                  v
+|-------------------------------------------------------------
+| Data' | Data'' | inode '' | inode map '' | Data''' | ...
+|-------------------------------------------------------------
+
+--------------------------------------------------------------------------------------------
+
+Garbage Collection:
+
+Problem: the log generates a lot of garbage.
+Problem: the second time we go through ther file system, fragmentation means we can't write continuously.
+
+Solution: do garbage collection on the log to create large contiguous open segments.
+
+Create a background process that periodically cleans up the fs. This works pretty well if there
+is a high proportion of idle time. If we are using a hard disk, this ends up depending on your particular workload.
+
+On flash, erasing needs to be done in large chunks anyways, so the cleaner performs well.
+Logs also do well in spreading out the wear on the flash memory.
+Today, most ssd's have a log-based fs flash memory layer.
+
+How to do the garbage collection?
+The naive approach is to try to garbage collect segments that are mostly garbage, but this performs poorly
+because of the life-time of files.
+
+File life-time: fiels that have recently been edited are likely to be updates in the near future. 
+Files that haven't been updates in a long time are unlikely to be updated any time soon.
+
+Instead, generational garbage collectors perform much better.
+Generational garbage collectors treat data differently depending on how recently it was allocated.
+Uses heuristics like that given above to assess how to clear data.
+
+
+
+

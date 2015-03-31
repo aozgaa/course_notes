@@ -1,0 +1,155 @@
+Midterm Solutions:
+
+1) Scheduling:
+
+FCFS:   AAAAAAABBB
+RR:     ABABABAAAA
+STFC-P: BBBAAAAAAA
+Lowest average Response Time: STFC-P
+Fewest Preemptions: FCFS
+
+2) Office hours:
+
+struct student {
+	helpType helpNeeded;
+	cv individual_help_cv;
+};
+
+mutex m;
+deque<struct student> line;
+cv instr_cv;
+cv general_help_cv;
+
+void StudentWaitForHelp(helpType helpNeeded){
+	struct student s;
+	s.helpNeeded = helpNeeded;
+	
+	m.lock();
+
+	line.push_back(&s);
+	instr_cv.signal();
+	if(helpNeeded == individual)
+		s.student_cv.wait(m);
+	else // helpNeeded == general
+		general_help_cv.wait(m);
+
+	m.unlock();
+}
+
+void Instructor() {
+	struct student s;
+	while(1) {
+		m.lock();
+
+		while(line.empty())
+			instr_cv.wait();
+		
+		s = line.front();
+		helpType type = s->helpNeeded;
+		if(type == individual) {
+			line.pop_front();
+			s->individual_help_cv.signal();
+		} else {
+			// remove all general students from line			
+			general_help_cv.broadcast();
+		}
+		m.unlock();
+		HelpStudents();
+	}
+}
+
+3) Atomic Operations:
+
+// code:
+atomic<bool> guard = false;
+
+while(test_and_set(guard)) ;
+
+i++;
+
+guard.store(0);
+
+Poor performance:
+If an interrupt occurs to a thread holding the guard and the ready Queue is non-empty,
+then all other threads busy-waiting  on the user-level guard will spin until the thread
+with the guard runs again.
+
+Good performance:
+Without preemptions, this implementation is ideal -- cheaper than a context switch and the
+critical section is very short.
+When (# thread) <= (# cpus) the thread with the guard won't be put on the back of the ready Queue
+(because the ready queue is empty).
+
+4) Recursive locks:
+
+class RecursiveLock {
+	private:
+		int lock_count;
+		queue<ucontext_t*> lockQueue;
+		ucontext_t* owner;
+};
+
+void RecursiveLock::Lock(){
+	// disable interrupts and get guard
+	if (lock_count > 0){
+		if (owner != current[cpu::self()]) {
+			ucontext_t* t = current[cpu::self()];
+			lockQueue.push(t);
+			current[cpu:::self()] = ready.front();
+			ready.pop();
+			swapcontext(t, current[cpu::self()]);
+			// assert has guard, interrupts disabled, lock_count == 1
+			// assert is owner
+		} else {
+			lock_count++;
+		}
+	} else {
+		owner = current[cpu::self()];
+		lock_count++;
+	}
+	// release guard and enable interrupts
+}
+
+void RecursiveLock::Unlock(){
+	// disable interrupts and get guard
+
+	if (owner != current[cpu::self()]){
+		// release guard and enable interrupts
+		throw runtime_error("unlocked a lock you didn't own");
+	}
+	lock_count --;
+	if(lock_count == 0){
+		if(!lockQueue.empty()) {
+			lock_count++;
+			ucontext_t* t = lockQueue.front();
+			lockQueue.pop();
+			owner = t;
+			ready.push(t);		
+		}
+	}
+	// release guard and enable interrupts
+
+5) Recursive Locks Test Case
+
+RecursiveLock rl;
+
+void child(){
+	rl.lock();
+	cout << "oops" << endl;	
+}
+
+void parent(){
+	thread t(child);
+	rl.lock();
+	rl.lock();
+	thread::yield();
+	rl.unlock();
+	// should still hold the lock -- child shouldn't proceed
+}
+
+void main(){
+	cpu::boot(1, parent, 0, 0, 0);
+}
+
+good output: 
+bad output: oops

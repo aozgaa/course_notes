@@ -1,0 +1,129 @@
+Paging:
+
+Gets rid of external fragmentation, but doesnt get rid of fragmentation entirely because
+we need to fix a page size
+
+Virtual address:
+
+
+	         virtual page # (1)                offset
+	|------------ 20 bits ------------|------- 12 bits -------|
+
+Thus far we-ve used a flat array to manage addresses
+
+Problem: valid addresses are sparse.
+
+Solution: use a tree (ie: multi-level page tables)
+
+	  virtual page # (1)    virtual page # (2)            offset
+	|------ 10 bits ------|------ 10 bits ------|------- 12 bits -------|
+
+Don't need multi-level page tables in project 3 because the address space is
+restricted to be quite small.
+
+Pros: sharing data is easy, allocation is easy, handling faults is easy
+Con: a memory access can yield multiple faults
+
+Solution: add a cache for page tables.
+In MMU parlance, this is called a translation lookaside buffer (TLB).
+
+
+----------------------------------------------------------
+
+Virtual memory:
+
+Idea: Make memory appear larger than it is.
+ie: abstract away the disk -- make it behave like an extension of memory
+-- the user does not "see" the disk.
+
+Manage physical memory as a cache.
+
+Question: what cache replacement policy should we use when
+memory is regarded as a cache for the disk?
+
+Algorithm 1: replace a random page
+Pro: easy to implement, hard to mess up
+Con: horrible performance
+
+Idea: exploit data locality
+
+Algorithm 2: FIFO -- remove the queue entry that arrived first
+Pro: still easy to implement
+Con: there are bad workloads.
+
+FIFO doesn't really track locality, since we also care about what the most recent access is.
+
+Algorithm 3: Remove the page that won't be used for the longest time in the future
+Pro: optimal performance
+Con: requires omniscience -- can't be implemented in practice :(
+
+Algorithm 4: Least Recently Used (LRU)
+Pro: Works very well in practice
+Con: difficult to implement efficiently in hardware or software
+
+Idea: LRU is too hard to implement in hardware, so maybe approximate its behavior
+
+Algorithm 5: CLOCK
+Description:
+-- arrange pages in a clock (circularly linked list, implemented as a vector)
+-- each page has a referenced bit
+-- evict pages that haven't set the reference bit by reading around the clock
+-- whenever a page is read/written, set the reference bit
+-- whenever we look for a page to evict, and the refenced bit is set, unset the bit.
+
+
+Store these bits in the (top of) the page table:
+
+
+	|--- Physical Page number ---| readable | writable | referenced | dirty | ... |
+
+Worst case is a sweep of all the physical pages but this happens rarely in practice.
+
+------------------------------------------------------------
+
+Page replacement:
+
+Idea: only need to write a page to disk when over-write its data
+
+Implementation: add a dirty bit to the top of the page
+
+Called a write-back cache.
+
+Writing to disk on every store is called a write-through cache. Potentially inefficient.
+
+Don't need valid and resident bits. If page isn't valid, set read & write bits to 0. Similar for resident.
+
+---------------------------------------------------------------
+
+Trying to get rid of the dirty/reference bit:
+
+We can remove the dirty bit, set the writable bit to 0, and then run the page fault handler every
+time there is a store an update the shadow dirty bit. This is slow -- running software for every slow.
+
+Optimization, update the writable bit after the first time the page-fault handler is hit, so it doesn't run frivolously
+in the future.
+
+For reference bits, need to unset the writable bit every time we unset the reference bit.
+
+
+State diagram for pages:
+
+On disk, in memory, valid/invalid, dirty/clean, referenced/unreferenced
+
+Page fault handler is where we implement the state machine.
+
+-----------------------------------------------------------------
+
+MMU:
+
+if (virtual_page_number is non_readable on a read or non_writable on a write){
+	trap_to_OS_fault_handler();
+	retry instruction;
+} else {
+	physicalPageNumber = pageTable[virtual_page_number].physicalPageNumber;
+	perform_access();
+}
+
+
+
+

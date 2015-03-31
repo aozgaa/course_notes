@@ -1,0 +1,87 @@
+
+The Internet:
+
+Internet is like a really bad mail system. The abstraction we are given is that we can package some
+information into a packet, and then send it off, with not guarantee that the data will be received, and
+even if it is received, that the data won't be corrupted. 
+ie: we given an abstraction for communicating from machine to machine.
+
+Socket is a virtual networking abstraction that will move us to the abstraction of process to process communication.
+
+TLS is a protocol, implemented in the OS, for providing socket abstractions.
+
+-------------------------------------------------------------------------------------------------
+
+Sockets:
+
+    NIC   
+   /   \
+  /     \
+  v      ^
+----    ----
+|  |    |  |
+|  |    |  |
+|  |    |  |
+|  |    |  |
+|  |    |  |
+----    ----
+ \       ^
+  v     /
+  Process
+
+Socket is attached to a bounded buffer. The OS is responsible for managing how data enters, leaves
+that buffer.
+
+
+Creating a socket really amounts to creating the mailbox in the os, and returning a file descriptor corresponding
+to the socket buffer. The OS needs to implement how that data actually gets to the network.
+OS needs to handle fairness, efficiency, etc.
+
+---------------------------------------------------------------------------------------------------
+
+Internet Protocols:
+
+UDP: Wrap IP with a [source, destination] ip [address, port] and checksum
+-- inherits all the problems of IP.
+
+TCP: provides reliable ordered byte streams within a connection. Have all UDP header info, plus a sequence #
+
+Defn. a connection is a sequence of three events: (1) initializing a connection, (2) sending packets, (3) closing the connection.
+
+// client pseudo-code
+
+	s = socket();
+	connect(s, IPAddress, Port #)
+
+// server pseudo-code
+
+	s = socket();
+
+	//
+	// Note, we get a new, second socket for actually conducting the particular connection.
+	//
+	connection = accept(s);
+	// ...
+
+How to doest TCP deal with the recieving packets in the incorrect order:
+
+0 1 2 3 4 ...
+
+is received as
+
+0 1 3 2 4 ...
+
+Solution 1: wait until you receive the next packet.
+
+Solution 2: leave a gap in the buffer for the skipped elements, and don't let the user read until
+the gap is filled.
+
+But what if 2 is never received.
+
+Solution 3: Only accept packets that increase monotonically (throw out the rest).
+Pro: Don't need to buffer for packets.
+Con: lose data.
+
+This is okay for a real-time chat, where a late message is a useless message.
+
+Next time: adding reliability and byte streams.

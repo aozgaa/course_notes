@@ -1,0 +1,41 @@
+Intro to File Systems:
+
+The picture
+
+	|-------------------------------|
+	|				|
+	|	      Apps		|
+	|				|
+	|-------------------------------|
+	|				|
+	|     I/O and File Systems	|
+	|				|
+	|-------------------------------|
+	|				|
+	|	Storage Devices		|
+	|				|
+	|-------------------------------|
+
+File systems perform a uniform abstraction to storage devices
+-- everything is a block/file/directory
+-- multiple devices appear to be congtiguous
+-- simple, rich naming (abstractions): symbols, structured tree, unified
+-- flexible block assignment
+-- makes disk appear to be fast
+-- consistency in the face of crashes
+
+Bottom of the OS:
+
+	|-------------------------------|
+	|				|
+	|	   Rest of OS		|
+	|				|
+	|-------------------------------|
+	|				|
+	|	 Device Drivers		|
+	|				|
+	|-------------------------------|
+	|				|
+	|     1,000's of H/W devices	|
+	|				|
+	|-------------------------------|
