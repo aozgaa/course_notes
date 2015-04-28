@@ -1,0 +1,109 @@
+Final Exam Review
+
+-- Exam will focus primarily on the second half of the term.
+
+--------------------------------------------------------------------
+
+Address Spaces:
+
+-- code, heap, stack, globals
+
+Abstractions:
+-- independence
+-- protection & controlled sharing
+-- simulating a larger memory
+-- static vs. dynamic translation
+
+static is limited because we need bounds checking on all pointer
+derefences so we don't cross into another application's memory
+
+Dynamic translation schemes:
+-- uniprogramming
+-- base and bounds
+-- segmentation (multiple base and bounds). Problem is fragmentation
+-- paging (segmentation with segments of constant size)
+-- multi-level paging (page tables are tree of fixed depth). 
+	* Allows for larger address space as we don't need to allocate all levels of the page table at startup
+	* problem is indirection adds latency
+-- Translation Lookup Buffer (multi-level paging optimization)
+	* offsets problem of added indirection
+
+Memory Replacement Policies:
+-- Opt, LRU, Clock, etc.
+-- deferring/avoiding work
+-- page table bits
+-- multi-process issues (thrashing, computing working set [???], etc)
+
+Memory protection:
+-- user-mode/kernel mode bit switch
+-- has a pre-specified entry into kernel, only kernel can modify that handler entry.
+-- kernel is paranoid about argument checking
+
+Creating a Process (fork/exec)
+-- copy-on-write
+-- a unix shell
+-- mmap/signal (not on the exam)
+
+------------------------------------------------------------------------
+
+File Systems:
+-- device drivers provide readblock/writeblock abstractions.
+-- translation/filesystem namespaces
+	* How do we compute (offset, inode) -> block?
+	* How do we compute path -> block/inode?
+-- disk scheduling
+-- file caching and fsync to force saving.
+	* Memory-mapped files
+-- durability issues
+	* Careful ordering solves
+	* atomic transactions
+		~ Shadowing
+		~ logging
+-- distributed file systems
+	* need caching to make performance reasonable
+	* MESI protocol (like distrivbuted r/w locks)
+-- Log Structured File System (LFS)
+
+-------------------------------------------------------------------------
+
+Networking:
+
+Sockets:
+-- a bounded buffer
+-- a port number (used for listen/accept on server and connect on client) (aka a mailbox)
+-- [???] (TCP)
+	* Reliable
+	* ordered
+	* bytestreams (data sent/recv independent of packet size)
+
+------------------------------------------------------------------------
+
+Distributed Systems:
+
+-- Sharing via messages
+-- synchronization via messages
+-- Remote Procedure Call (RPC)
+-- client/server paradigm
+-- ordering of events
+	* Lamport Clocks
+-- Fault Tolerance
+	* Stop Failures: primary backup fault tolerance [???]
+	* Byzantine Failures: Byzantine Fault Tolerance (BFT) [???]
+	* [Not on exam]: Paxos solves an intermediate level of failure.
+
+------------------------------------------------------------------------
+
+Security:
+
+-- confidentiality
+-- authenticity
+-- freshness
+
+Public-Key Cryptosystems
+Private-Key CryptoSystems
+Replay Attacks
+
+General Security
+-- authentication (verifying an identity)
+-- authorization (permissions)
+	

@@ -41,7 +41,7 @@ So we need to update inodes proportional to the depth of the tree. This will
 work, but seems prohibitively expensive.
 
 Idea: keep an inode map. Then we just need to update the inode map.
-key is an indoe number.
+key is an inode number.
 entry is the logical block number of the latest version of the inode.
 
 Idea: make the inode map a "superblock" and store a persistent version at a checkpoint region.
@@ -84,7 +84,7 @@ How to do the garbage collection?
 The naive approach is to try to garbage collect segments that are mostly garbage, but this performs poorly
 because of the life-time of files.
 
-File life-time: fiels that have recently been edited are likely to be updates in the near future. 
+File life-time: fields that have recently been edited are likely to be updates in the near future. 
 Files that haven't been updates in a long time are unlikely to be updated any time soon.
 
 Instead, generational garbage collectors perform much better.

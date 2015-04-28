@@ -18,10 +18,15 @@ of magnitude slowdown). How to solve this problem?
 2) Run fewer processes at a time.
 
 Given a process T, let WorkingSet(T) denote the set of pages
-referenced within the last k seconds (some fixed k). This
-can be approximated using a clock that sweeps accross at a constant speed.
+referenced within the last k seconds (for some fixed k). This
+can be approximated in two ways:
+-- using a clock that sweeps across at a constant speed,
+-- set "referenced in time k" bits to zero, wait k seconds
+(and set a ref bit if the memory was referenced in that time),
+and check which pieced of memory are referenced.
+	* Assumes there are no evictions in that period.
 
-A Balance Set is a collection of Working Sets that fit into memory.
+A Balance Set is a collection of Working Sets that simultaneously fit into memory.
 
 ------------------------------------------------------------------
 
@@ -61,15 +66,18 @@ Project hint: need to keep a reference count for shared pages.
 
 Creating a shell
 
-Parent should wait for child to finish
--- use the waitpid() call (similar to thread_join() but for processes)
--- read man page for details
--- signature:
-	long waitpid(pid_t pid, int* status, int options)
+There are some key Unix functions that ease writing shells:
+-- fork(), exec() : mentioned above.
+-- pid_t waitpid(pid_t pid, int *status, int options) : wait for the process with pid to finish, 
+	* returns the pid of the child process on success, and -1 otherwise (sets errno).
+	* returns info about how the process pointed to by pid changed in status
+	* Options modifies when waitpid returns.
+-- int dup2( int old_fd, int new_fd) : makes old_fd, new_fd point to the same file descriptor (new_fd)
+	* returns new_fd on success, and -1 otherwise (sets errno).
+	* Think of file descriptor redirection, like 1>/dev/null
 	
--- ????
--- int close()
--- int dup2()
+-- int close(int fd) : closes the file descriptor given by fd
+	* returns 0 on success, and -1 otherwise (sets errno).
 
 Mechanisms for inter-process communication
 -- network sockets
@@ -80,11 +88,15 @@ Mechanisms for inter-process communication
 
 Pipes: ideal for producer-consumer relationships
 -- bounded buffer of characters
--- int pip(ints fds[2]);
+-- int pip(ints fds[2]) : connects fds[0] to fds[1] via a producer-consumer pipe.
+	* writing to the pipe places the written data in a buffer until it is read by a reader.
+	* fds[0] is the read-end of the pipe
+	* fds[1] is the write-end of the pipe.
+
 -- 1st descriptor is for reading, second is for writing
 -- pipe exists ONLY in the creators address space
 -- how can other processes use it?
-	??
+
 
 ------------------------------------------------------------
 
@@ -114,22 +126,3 @@ OS uses signals to notify processes of events
 	but, process can ask to be notified instead
 -- process register signal handler function
 	OS calls it when signal happens
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
--------------------
-
-PROJECT: how to do a clock eviction? need to be able to know where the page lies in physical memory.

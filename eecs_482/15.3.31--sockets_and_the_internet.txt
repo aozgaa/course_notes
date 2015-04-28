@@ -63,7 +63,7 @@ Defn. a connection is a sequence of three events: (1) initializing a connection,
 	connection = accept(s);
 	// ...
 
-How to doest TCP deal with the recieving packets in the incorrect order:
+How to doest TCP deal with the receiving packets in the incorrect order:
 
 0 1 2 3 4 ...
 

@@ -66,7 +66,7 @@ C  x--->                             x---->
 
 EDF is the first model for real-time systems. There is a LOT more to this field.
 EG: linux implements both soft real-time (no starving) and hard real-time scheduling.
-Used by video players and car brake systems, repectively.
+Used by video players and car brake systems, respectively.
 
 
 

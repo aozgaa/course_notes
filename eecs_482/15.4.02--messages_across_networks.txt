@@ -1,0 +1,128 @@
+Message Detection:
+
+The problem:
+
+Sender		Reciever
+-------------------------
+	   ?
+O----------X------->
+
+
+How does the sender know if her packet was recieved?
+
+Idea: wait for a response, and timeout:
+
+Sender		Reciever
+-------------------------
+	   ?
+O----------X-------> O
+?		     |
+?		     |
+?		     |
+?		     |
+?	   ?	     |
+?<---------X----------
+?
+timeout
+
+
+Problems: 
+-- if the timeout is too long, we waste time waiting.
+-- if the timeout is too short, we'll send too many duplicates
+-- if the response is lost, then we'll frivolously respond.
+
+A solution: The reciever accepts packets, storing ithem in a message indexed array,
+and returns the idnex of the highest contiguously recieved packets.
+
+If the sender recieves acknowledgement of the same "highest contiguous region k" some number c times,
+then it resends the k+1 packet (for TCP, c = 3).
+
+---------------------------------------------------------------------------------
+
+Corruption:
+
+Send a checksum.
+
+---------------------------------------------------------------------------------
+
+Byte Streams:
+
+The user abstraction is that messages are being sent and recieved in a continuous stream.
+In reality, packets arrive at distinct times in discrete chunks.
+
+recv can return an unpredictable # of bytes, so we need to parse the stream
+in the application, and repeatedly call recv until we get the desired # of bytes.
+(ie: wrap calls to recv in a while loop).
+
+Need to figure out how many bytes of data we want to recieve.
+
+Solution 1: size is known by convention (ie: hardcoded in the protocol).
+
+Solution 2: send the size in the header.
+
+Solution 3: Use a sentinel to signal the end of the message.
+	-- eg: c-strings end with '\0'.
+	If our message is allowed to have '\0', then we can perform bit-stuffing 
+		with the terminator "\0\0" to signal the end of the message:
+		"abc\0\0asdads" -> "abc\01\01asdads"
+
+
+----------------------------------------------------------------------------------
+
+Distributed Applications:
+
+Why?
+1) Performance -- we get "parallelization"
+2) Reliability -- redundancy in computation increases reliability
+3) Co-location-- multiple resources at multiple locations cooperate
+
+Why not?
+1) Simplicity
+
+Need:
+Synchronizaiton mechanisms.
+
+All we have have is send/recv of messages.
+For now, assume we send distinct packets, not byte streams.
+
+If we want <A> on machine 1 to occur before <B> on machine 2, we
+can enforce it with a message:
+
+Machine 1	Machine 2
+-------------------------
+
+<A>	   
+O------------------>
+		  <B>
+
+What about mutual exclusion?
+
+Idea: use a lock server.
+Everyone who wants the lock requests to the server, which arbitrates the decision
+and sends back the results:
+
+Machine 1	Lock Server	Machine 2
+-------------------------------------------------
+
+Request Lock			Request Lock	   
+O------------------>  <-----------------
+	     Grant permission
+<-------------------
+<Critical Section>
+Release Lock
+------------------->
+	     Grant Permission
+		      ----------------->
+			     <Critical Section>
+
+
+Note, this is not fault tolerant at all.
+More robust solutions are Paxos, Byzantine Fault Tolerance
+(but these are expensive in terms of # of rounds and requiring extra nodes).
+
+------------------------------------------------------------------------------
+
+Distributing Computing Models:
+
+So far we have described client-server systems.
+Examples: project 4, AFS, the internet, ...

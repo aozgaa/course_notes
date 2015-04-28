@@ -1,0 +1,226 @@
+
+More Distributed Systems (& Less Security):
+-------------------------------------------
+
+Client-Server System:
+-- multiple clients communicate with a distinguished server.
+
+-- a synchronous request is one where the client waits for a response before continuing.
+-- an asynchronous request is one where the client doesn't wait.
+
+Examples:
+-- web server.
+
+Some pseudocode
+
+// version 0
+client_produce() {
+	send_request_add_coke();
+	wait_for_response();
+}
+
+client_consume() {
+	send_request_get_coke();
+	wait_for_response();
+}
+
+server(){
+	while(1) {
+		recieve_request();
+		server_handle_request();
+	}
+}
+
+// broken
+server_handle_request() {
+	if (! request_well_formed() ) return FAILURE;
+
+	if ( request is from a producer ) {
+		put coke in machine;
+	} else {
+		
+		//
+		// if there are no cokes, we will block & never service any requests
+		//
+		while( ! cokes in the machine ) wait;
+		take coke out of machine.
+	}
+}
+
+Idea: Make it multithreaded.
+
+// version 1
+lock l;
+
+server(){
+	while(1) {
+		recieve_request();
+		create_thread(server_handle_request);
+	}
+}
+
+
+server_handle_request() {
+	if (! request_well_formed() ) return FAILURE;
+
+	unique_lock<lock> u_lock(l); // releases at end of scope
+
+	if ( request is from a producer ) {
+		put coke in machine;
+	} else {
+		
+		//
+		// if there are no cokes, we will block & never service any requests
+		//
+		while( ! cokes in the machine ) wait(l);
+		take coke out of machine.
+	}
+}
+
+Idea: making threads is expensive. Lets avoid if we don't need it.
+
+Solution 1: make a thread pool. Dynamically add/remove threads to prevent deadlock, or dedicate some threads
+for only adding/removing coke.
+
+-------------------------------------------------------------------------------------------
+
+What is potentially slow?
+
+-- putting coke into/ taking coke out of the machine
+-- the network
+	Want send()/recv() to be non-blocking.
+
+Two types of solutions:
+1) Use select/poll system calls to see if operation will be blocking. 
+
+2) Event-based programming.
+	-- structure program as sequence of non-blocking operations, and blocking operations register call-backs & continue.
+	-- hard to reason about correctness of code when functionality is split across callbacks.
+
+--------------------------------------------------------------------------------------------
+
+Abstracting away the distributed Nature of the System.
+
+Function calls look similar to a network request.
+
+We wish to make a remote request look like a request.
+
+Called Remote Procedure Calls (RPC).
+
+Client has a function client_stub()
+which performs te work of making and executing a request
+
+server_stub recv()'s the request and sends it to the server:
+
+             fn_call
+client <-----------------> client_stub()
+	     return	send()	^ recv()
+				|
+				|
+				|
+				|
+	    fn_call	recv()	v send()
+server <-----------------> server_stub()
+	    return
+
+
+int produce(int num); // does lots of work
+
+client_stub:
+	int produce(int num) {
+		get_status(); // gets sock
+		send(sock, &num, sizeof(num), 0);
+		recv(sock, &status, sizeof(status), 0);
+		return status;
+	}
+
+// server
+produce_stub(int sock) {
+	int n;
+	recv(sock, &n, sizeof(n), 0);
+	status = produce(n);
+	send(sock, &status, sizeof(status);
+
+}
+
+But RPC is a leaky abstraction...
+
+--------------------------------------------------------------------------------------
+
+Sending (pointerful) data structures over the network:
+
+structured data that is location relative can't be sent over the network.
+The recipien ts address space isn't the same as ours, so we need to take the data 
+and flatten it. The process of flattenning the data is called serialization.
+
+Reconstructing the pointerful data structure from the flat structure is called
+deserialization.
+
+---------------------------------------------------------------------------------------
+
+Network can fail in ways function calls don't:
+
+RPC call can take "too long", need to return with error codes that don't occur with normal functions.
+ie: extra exceptions to catch...
+
+----------------------------------------------------------------------------------------
+
+Project 4 stuff:
+
+It's a lot of work. I hope you have started...
+
+Using multiple locks (unlike stuff we have done earlier in the course).
+
+Want to use hand-over-hand locking to avoid race conditions on the modification of the dir tree.
+
+Exercise. What is the global order in the acquisition of locks?
+
+Exercise. What locks do you need to hold to delete a node?
+	-- does it depend on whether you are deleting a file or directory?
+
+-----------------------------------------------------------------------------------------
+
+How to determine whether event A or B happened first on the internet?
+
+Idea: use a global clock. Unfortunately, this is impossible.
+-- so, there is no global time.
+
+Idea [Lamport]: instead of looking at time, look at causality.
+-- We can say A happens before B is A could possibly influence B.
+	-- think of the relativity analogue.
+-- This is called the Happened-Before relation.
+
+What does this mean?
+
+1) All events in a single process are sequentially ordered?
+2) Sending a message -> recieving a message.
+3) These relations are transitive.
+
+This defines a partial order over the set of all events.
+Two events that aren't related are called concurrent.
+
+Example: Coke Machine.
+1. Removal of coke -> sending message
+2. Sending message -> recieving message on client
+3. recieving message -> return from client_produce
+
+Source: http://research.microsoft.com/en-us/um/people/lamport/pubs/time-clocks.pdf
+
+-------------------------------------------------------------------------------------------
+
+How to get a total ordering from this partial order?
+
+Idea [Lamport]: Give each computer an integer-valued clock.
+These are called Lamport clocks.
+
+Axioms of Lamport clocks:
+1) Each event on a single process increments the processor clock by 1.
+2) Each send stores the local clock in the message
+3) Each recieve sets the local clock to
+	max ( local clock + 1, message clock + 1)
+
+Under these conditions, if A causes B then time(A) < time(B).
+Converse does not hold.
+
+If we pick an arbitrary ordering on machines and break ties using this ordering,
+then we now have a (non-unique) total ordering on all events!

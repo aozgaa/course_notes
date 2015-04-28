@@ -1,0 +1,14 @@
+Applications Beyond Operating Systems:
+
+Abstractions:
+-- experience with handling permissions
+-- mapping between abstractions
+-- designing good abstractions for the layer above and below
+-- consistency and concurrency
+-- scheduling shows up everywhere
+-- Caching is an important means for providing locality
+-- using indirection make a problem tractable but slow. Then using caching.
+-- ordering and atomicity of transactions is fundamental.
+-- fault tolerance is important for internet-scale/distributed systems.
+-- programming slowly is important
+-- collaboration as a skill

@@ -1,0 +1,54 @@
+Register Allocation:
+
+Goal: Try to hold as many variables in registers as possible.
+
+
+-- reduce memory read/write
+-- reduce total memory usage
+
+Problems:
+-- which registers do we put variables in?
+-- what do we do when we run out of registers?
+
+A variable is live if its calue may be read later before it is written.
+(We did this using global liveness analysis).
+
+A live range for a variable is the collection of points where the variable is live
+
+A live interval is the smallest interval containing the live range for a variable.
+
+We can create a graph where vertices are variables (or, in a refinement, live ranges for each variable)
+and two vertices have an edge iff their live intervals overlap.
+
+Then k-register allocation corresponds to finding a k-coloring of the resulting graph.
+
+This problem is NP-hard. Ooops
+
+-------------------------------------------------------------------------------
+
+Heuristic Algorithms:
+
+1) Chaitin's Algorithm
+
+Intuition: 
+
+If a node has less than k neighbors, there will always be a color left over to color
+that node.
+
+Algorithm:
+
+Input: G = (V,E)
+Output: k-coloring
+
+If G has <= k vertices
+then
+	color them distinctly.
+else
+	Find a node v with < k outgoing edges.    (*)
+	Color G \ v (recursively).
+	Add v in, color it with an open color.
+
+Return the coloring.
+
+(*) This might not be possible. If not, we need to use some heuristic to pick a good node.
+	We can remove a node and color it at same time.

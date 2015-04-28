@@ -1,0 +1,31 @@
+Safety and Liveness Propoerties:
+
+Review from last time. Look it up.
+
+-------------------------------------------------------
+
+Algorithms For Safety & Liveness:
+
+A stop failure is a crash we can find out about by querying some other
+service (eg: operating system).
+
+A Byzantine failure is any failure (eg: just stops reporting but keeps running).
+
+To tolerate stop failures, we described primary-backup failures.
+-- need (# failures) + 1 nodes, and 1 round.
+
+For Byzantine failures we described the Byzantine Fault Tolerance (BFT) protocol.
+-- need 3 * (# failures) + 1 nodes, and 3 rounds.
+
+Idea: make a DFA for the state of the system.
+
+Try to create consensus among the transitions in the DFA.
+Then each node can figure out the state of the system.
+
+-------------------------------------------------------
+
+Another type of fault is a crash fault:
+-- the node stops working, but doesn't report failure (appears unresponsive).
+
+The algorithm to solve crash faults is called Paxos
+-- need 2 * (# failures) + 1 nodes and 2 rounds.

@@ -1,0 +1,105 @@
+Project tips:
+
+-- Check the filesystem is well-formed.
+-- assert whereever possible (check you aren't creating an entry in an unordered_map)
+-- send,recv don't necessarily send the right number of bytes.
+-- Check for memory leaks (minimize heap allocations).
+
+----------------------------------------------------------------------
+
+Security:
+
+4 basic tools for network-based attacks (the threat model):
+
+1) Eavesdropping over a network.
+2) insert fake packets.
+3) delete packets.
+4) modify communication.
+
+Examples: identity spoofing, replay attacks, man-in-the-middle.
+
+Desired properties of a network-communication:
+
+1) Confidentiality	-- eavesdropped doesn't know what we are sending
+2) Authentication	-- confidence that messages sent are from the desired party
+3) Freshness		-- messages recieved were sent "recently"
+4) no denial-of-service	-- prevention of the ability for the service to work over the network.
+			-- eg: flooding service with bad requests, or stopping the network.
+
+Tools for making communication work:
+
+encrpyt/decrypt
+
+encrypt :: (cleartext) , (encryption_key) -> (ciphertext)
+decrypt :: (ciphertext), (decryption_key) -> (cleartext)
+
+It is assumed that decrypting is hard if the decryption key isn't known.
+
+if the encrpytion_key and decryption_key are the same, we call the system
+symmetric key encrpytion, or secret key encrpytion.
+
+If not, then this is called public key encryption.
+
+Often the hard part is communicating the key in the first place. One way is
+to use a mutually trusted third party server to establish secret keys.
+Example: Kerberos.
+
+Tool: if the message is short, it can be guessed. Adding some sort of checksum can make it harder to guess.
+
+-------------------------------------------------------------------------
+
+Communicating without a trusted third party:
+
+Diffie-Hellman Key exchange:
+
+Based on the conjectured hardness of modular arithmetic (specifically, discrete log).
+
+There is a public large prime number, P, and g, a generator for the multiplicative group mod P.
+
+1) Alice picks a secret key A, and sends g^A (mod P).
+2) Bob picks a secret key B, and sends g^B (mod P).
+3) Then (g^A)^B = (g^B)^A (mod P) are keys that can be used to encrypt messages.
+
+Problem:
+-- Eve can pick C_1, C_2 and send Bob g^{C_1} (mod P), Alice f^{C_2} (mod P).
+
+Then Eve establishes one secret with Alice, and a separate secret with Bob. 
+Eve can decrypt both parties' messages and modify them as she wishes.
+
+-------------------------------------------------------------------------
+
+Public Key Encryption:
+
+encryption_key != decryption_key
+
+encrypt and decrpyt are the same function, crypt, so
+
+crypt( crypt( cleartext, e_key ), d_key ) = cleartext
+
+and
+
+crypt( crypt( ciphertext, d_key ), e_key ) = ciphertext
+
+If we crypt using the private key, then Eve can read the message  but can't replace it, so
+authenticity is ensured.
+
+If we crypt using the public key, then Eve can replace the message but can't read it, so
+confidentiality is obtained.
+
+We can compose the above to get both authenticity & confidentiality.
+
+Eg:
+send
+crpyt( "from me" + crypt( <real_contents>, sender_private ), reciever_public )
+
+Then we get confidentiality, because we encrypt with the public key, 
+and authenticity, because the inner message can only be decrypted with the sender's public_key
+(which Eve can't see).
+
+Providing confidentiality is called sealing, and providing authenticity is called signing.
+
+Problems: 
+-- PKE is much slower than symmetric key encrpytion.
+-- Spreading public keys is hard.
+
+---------------------------------------------------------------------------
