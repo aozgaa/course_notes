@@ -1,0 +1,62 @@
+EECS 388: Computer Security
+
+Staff:
+	Alex Halderman
+	Kevin Fu
+	David Adrian
+	Jay Han
+	Mo Hussein
+	Deepak Kumar
+	Alex Lau
+	Sai Rohit
+
+Course Topics
+	The Security Mindset
+	Applied Cryptography
+	Internet Security
+	Application Security
+	Culture, Law, Politics
+
+
+What is security?
+	Data protection
+	Correctness
+	Immunity to tampering
+	A provisional defintion
+		Computer security studies how systems behave in the presence of an *adversary*.
+	Insecuirty:
+		Level-0 : actual malicious attempt to cause harm
+		Level-1: specific errors that could be exploited in an assault
+		Level-2: Factors that predispose systems to vulnerability
+
+
+The Security mindset
+	Attacker Mindset
+		Look for weakest links
+		Identify assumptions of the security system -- and figure out which are false
+		Think outside the box -- not constrained by system designer's worldview
+	Defender Mindset
+]			Want to maintain a level of "rational paranoia"
+		Security Policy
+			What are we trying to protect?
+			What properties do we want to enforce?
+		Threat model
+			Who are adversaries? Capabilities and motivations?
+			What kinds of attack do we care to prevent?
+		Risk Assessment
+			What are the weaknesses of the system?
+			What will successful attacks cost us?
+			How likely?
+		Countermeasures
+			Cost v. benefit
+			Technical v. nontechnical
+	Security Policies
+		What are the assets we want to protect?
+	Focusing defense:
+		Trusted components: parts that must function correctly for the system to be secure
+		Attack surface: parts of the system exposed to the attacker
+	Pitfalls
+		Convincing oneself of security
+			focus on weaknesses and correcting them instead
+	Other principles
+		

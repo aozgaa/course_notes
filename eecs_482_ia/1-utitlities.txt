@@ -1,0 +1,179 @@
+Discussion 1: Utilities
+-----------------------
+
+Version Control:
+
+Why?
+* backups
+* ability to revert
+* ability to collaborate remotely (most useful in project 4)
+* See exactly what was submitted to the autograder
+
+Git: a horrible interface to a great idea.
+
+The good:
+* history of (almost all) actions is preserved
+** exception is when you checkout a repo with unsaved changes.
+* can control how you share your history with others.
+* can store a copy of as much of the history as you want.
+* can create and merge feature branches,
+ so you and your teammates can work on multiple features simultaneously
+* commits are hashed, apparently good for security reasons
+** Aside: git was developed by Linus Torvalds to manage the linux kernel.
+** There was a big security concern that people would be able to tamper with the commit history, 
+** so commits in linux are designed to have some nice security properties... or so I'm told.
+
+The bad:
+* The syntax sucks
+* There are many ways to perform the same action
+* It sometimes feels like you are about to destroy a lot of work by accident
+** fortunately, this isn't usually the case.
+* As a result of the above, it is difficult to learn.
+
+-------------------------------------------
+
+Getting started with Git/Github:
+
+Setup git config settings:
+http://www.git-scm.com/book/en/v2/Getting-Started-First-Time-Git-Setup
+
+Generate ssh keys
+(so you don't need to type in your password every time you interact with github):
+https://help.github.com/articles/generating-ssh-keys/#platform-linux
+
+Git Book:
+http://www.git-scm.com/book/
+
+When you accidentally delete something, or want to undo:
+https://github.com/blog/2019-how-to-undo-almost-anything-with-git
+
+EECS 482 Git tutorial
+http://web.eecs.umich.edu/~pmchen/eecs482/git-tutorial
+
+Github Cheat Sheet
+https://training.github.com/kit/downloads/github-git-cheat-sheet.pdf
+
+Github online tutorial
+http://try.github.io
+
+-------------------------------------------
+What using git looks like (in this class):
+
+Copy the repo from Github
+> git clone ssh://<rest of address>
+Note, you should be copying the SSH ADDRESS from the rhs of the github page.
+
+If you need to work on an existing branch, do
+> git checkout <branch name>
+> git pull # may trigger errors about upstream, follow git's advice
+
+If you want to create a branch locally
+> git checkout -b <branch name>
+
+... do some work...
+
+save your changes to the history:
+1. pick which files you want to commit, then
+> git add <files>
+... or...
+> git add -A # adds all changed files, except those you've instructed git to ignore
+2. commit your files
+> git commit # brings up your text editor with a spot to write in the message
+... or...
+> git commit -m "<commit message>"
+
+... do some more work...
+
+save your changes to the history...
+
+So far, everything has been saved locally, but won't be visible on github.
+Let's send it on up.
+1. Get the latest state of the branch from Github
+> git pull
+1.1 If you have conflicts in the code, merge them manually.
+ie: open up a text editor and pick which version of the conflicting code you want
+This will require committing again
+2. Send the synced state of the repo on up
+> git push
+
+We want to merge our branch back to the main trunk (master)
+> git checkout <repo we want to pull changes into>
+> git merge <repo we want to pull changes from>
+Eg: I did feature work on a branch called "mutex-impl"
+> git checkout master
+> git merge mutex-impl
+You can also do this on the github site by creating a pull request,
+and your teammates can read/review your changes before they are committed back.
+
+Misc commands:
+> git rm <filename> # deletes the file and stages the change
+> git status # shows which changes are (un)staged
+> git log # shows the commit history
+> git reflog # shows the history of your traversal of the history
+> git diff # shows unstaged changes vs. the last commit
+> gitk # viewing history and other stuff, requires the 'tk' package, possibly also 'tcl'
+> git reset HEAD # unstage all changes
+> git reset HEAD^ # go back one commit from the current, without files in the repo
+> git reset HEAD~1 # alternate syntax for the above
+> git reset HEAD~2 # go back two commits
+> git reset HEAD@{1} # go back one position in the reflog
+> git reset --hard <any of the above> # do the above command, and change files in the repo
+
+--------------------------------------------
+GDB:
+
+uses:
+* run your program
+* make it stop on a line
+* stop when a variable changes
+* view the state of the program
+* modify the program while running
+
+> gdb <your program>
+>> run <args>
+>> break <file>:<line #>
+>> break <file>:<function name>
+>> info break # show all defined breakpoints
+>> info locals # show local variables in the current stack fram
+>> info args # show arguments to the current frame
+>> continue
+>> step # execute the next line, entering a function if it is a call
+>> next # execute the next line, do not enter the function if it is a call
+>> backtrace # show the function call stack
+>> frame <#> # inspect the corresponding frame
+>> up/down <#> # go up/down the corresponding number of frames
+>> info threads # show running threads
+>> thread <#> # switch to the corresponding thread
+>> thread apply all <command> # apply command to all threads
+>> handle SIGUSR1 nostop noprint # prevent gdb from complaining about project infrastructure
+
+--------------------------------------
+Core dumps:
+
+What?
+* When your program crashes, you can instruct the OS to flush (some or all of) 
+memory into a file.
+* gdb knows how to open these files and recreate the state of your program at 
+the time of the crash
+
+Tell your OS you want to generate core dumps, and they can be big
+> ulimit -c unlimited
+
+Generate a core dump
+> ./myapp <args> # run the application on inputs that cause it to crash
+... or...
+> ./myapp <args> # run the app, then hit CTRL-\ to generate a core dump
+
+Inspect the core dump
+> gdb <program name> core.<some numbers>
+
+---------------------------------------
+
+Valgrind:
+
+I never used it, but Mark Isaacson wrote a bit about it
+http://maintainablecode.logdown.com/posts/245425-valgrind-is-not-a-leak-checker
+
+---------------------------------------
+
+pimpl idiom

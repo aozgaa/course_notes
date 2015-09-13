@@ -1,0 +1,213 @@
+Message Integrity
+-----------------
+
+Announcements:
+* Final Exam to be rescheduled
+* Projct 1 Out
+* Discussions begin tomorrow
+* Some people getting in from waitlist
+
+-----------------
+
+Why does he stand with his arm reaching around his back?
+Posture or habit?
+
+Goal: message integrity
+
+Alice wants to send message m to Bob
+* don't fully trust the messenger of network carrying the message
+* want to be sure what Bob receives is actually what Alice sent
+
+Threat model:
+* The adversary, Mallory, can see, modify, drop, and forge message.
+* Mallory want to trick Bob into accepting a message Alice didn't send.
+
+One approach:
+Before communicating, Alice/Bob pick some function f: String -> Integer
+1) Alice computes v := f(m)
+2) Alice sends (m,v) across the wire, Bob gets (m',v')
+3) Bob verifies the v' = f(m')
+
+Desired properties of f:
+* Easily computed by Alice and Bob
+* NOT computable by Mallory
+
+Alice/Bob lose if Mallory can learn f(x) for *any* x \neq m.
+
+------------------------
+
+Candidate f:
+A random function:
+* input: Any size up to a huge maximum
+* output: a fixed size (eg: 512 bits)
+Define a giant lookup table that's filled by flipping coins:
+* 0 -> 0010010100 ...
+* 1 -> 1011010010 ...
+
+Completely impractical:
+* the size of the table grows exponentially with the maximum length of the message
+
+Provably secure:
+Mallory can't do better than guessing because, by assumption, Mallory doesn't know
+the function and f(s) is random.
+
+------------------------
+
+A more realistic option for f:
+
+A *pseudorandom function (PRF)*:
+
+Start with a large collection of functions f_0, f_1, f_2, ...
+where the f_i are possibly public.
+
+Then use f_k where k is a secret value (ie: key) known only to Alice/Bob.
+k is (say) 256 bits, chosen randomly.
+
+The key idea is that f_i is efficiently computable.
+
+Pitfalls of this pattern (aka Kerckhoff's Principle):
+* Don't rely on secret functions
+* Use a secret key, to choose from a function family.
+
+Why?
+* limits the attack surface
+* allows more people to contribute to the security
+* We can constrain the probability of the attacker guessing the key
+** should be cognizant of side-channels, discussed later
+* everyone can use the same system, makes secure protocols available for all
+
+Definition. A secure PRF is a game against Mallory where
+1) We flip a coin secretly to get a bit b
+2.1) If b = 0, let g be a random function
+2.2) If b = 1, let g = f_k, where k is a randomly chosen secret
+3) repeat until Mallory says "stop":
+* Mallory chooses x; we announce g(x)
+4) Mallory guesses b.
+
+We say f is a *secure PRF* if mallory can't do better than random guessing.
+That is, f_k is a indistinguishable in practice from a random function.
+
+Note, if Mallory has unbounded computation time/memory,
+then Mallory can ask for g(x) for all x, build a table, and compare to all the f_i.
+(The odds of Mallory being wrong are vanishingly small).
+
+So, we require additionally that Mallory runs in probabilistic polynomial time in the size of the key.
+
+------------------------------------------
+
+Returning to Alice/Bob/Mallory, we can update the procedure by picking
+a PRF at random from a collection using a shared key.
+Again, we assume Alice/Bob communicate the key in a way that Mallory can't access it
+and Mallory can't gain access to the key later.
+
+------------------------------------------
+
+If Alice/Bob now send more than one message, the game changes somewhat.
+Mallory can try to resend messages or reorder them (replay attacks).
+
+Alice/Bob can add timestamps/ordering, or use different keys for each message if they can agree on how many messages they want to send in advance.
+
+------------------------------------------
+
+We've talked about integrity so far, but not secrecy. Why?
+Integrity is essential to be able to control your message. Examples:
+* Mallory can impersonate Alice
+* The missiles can be fired mistakenly
+* Learning the message is bad, but modifying it allows Mallory to intervene in more ways
+
+------------------------------------------
+
+Do PRF's actually exist?
+
+Answer: We don't know...
+
+There are some well-studied functions where we haven't spotted a problem yet
+(eg: HMAC-SHA256)
+
+------------------------------------------
+
+Terminology:
+
+A Message Authentication Code (MAC) is a candidate PRF
+
+HMAC_k(m) :=
+    HASH(k XOR c_1 || HASH(k XOR c_2 || m))
+
+where || is concatenation, and c_1,c_2 are pre-chosen constants.
+
+XOR intuitively corresponds to picking some bits to flip (if one of the operands is predetermined).
+
+We typically use SHA256 as the hashing algorithm.
+
+------------------------------------------
+
+Definition. A *hash function* is a function with
+input: arbitrary length data
+output: fixed size digest (of bits)
+
+There is no key, and the hash function is typically fixed in a protocol.
+
+Bad hash functions:
+MD5 (broken), SHA-1 (known to be weak)
+
+Okay:
+SHA-256, SHA-512
+
+New:
+SHA-3
+
+There are some properties we'd like a cryptographic hash function to have:
+
+collision resistance:
+hard to find a pair x,x' s.t. H(x) = H(x')
+
+Second-preimage resistance
+Given x, hard to find x' s.t. H(x) = H(x')
+
+Preimage resistance
+Given y, it is hard to fin x' s.t. H(x') = y
+
+--------------------------------------
+
+How do we come up with hash functions?
+
+SHA-3 was developed as a result of a competition by NIST.
+
+--------------------------------------
+
+Definition. SHA-256
+Input: arbitrary length data
+Output: 245-bit digest
+
+Built with a "compression function" h:
+(256 bits, 512 bits) -> 256 bits out
+Very complicated, we won't go into the details here
+
+
+Algorithm:
+
+1) Pad input m to multiple of 512 bits using a fixed algorithm (so the person reading the message can "depad" it).
+2) Break into 512-bit blocks b_0, b_1, ..., b_{n - 1}
+3) Set y_0 <- constant initialization vector (I.V.)
+       y_1 <- h(y_0, b_0)
+       ....
+       y_i <- h(y_{i - 1}, b_{i - 1})
+4) return y_n.
+
+This structure for an algorithm is called a Merkle-Damgard construction.
+
+--------------------------------------
+
+Note, a cryptographic hash function is NOT a strong PRF.
+
+Subject to *length extension attacks*:
+* Given z = H(m) for some unknown m, can construct m' = m || padding || v for some v we choose
+such that z = H(m')
+
+It is better use a MAC/PRF (not a hash!)
+
+Swiss-army knife of cryptography:
+
+$ openssl dgst -sha256 -hmac <key>
+
+If you don't need a key, still just pick a constant.

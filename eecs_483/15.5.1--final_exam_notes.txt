@@ -1,0 +1,217 @@
+Objects:
+
+class Foo {
+	int x
+	int y;
+	int func1();
+	bool func2(int z);
+}
+
+An instance of Foo looks like:
+
+|------|          |-----|
+|vtable| -------> |func1| -----> code
+|------|          |-----|
+|  x   |          |func2| -----> code
+|------|          |-----|
+|  y   |
+|------|
+
+And a stack frame for a function call to func2 looks like:
+
+...
+Parent stack frame
+...
+-----------------------
+z
+-----------------------
+this (pointer)
+-----------------------
+(control) link address
+-----------------------
+instruction pointer
+-----------------------
+stack variable/temp 1
+-----------------------
+...
+-----------------------
+stack variable/temp n
+
+-----------------------------------------------------------------
+
+PHP's Problems:
+
+* the call-by-string covnention means function calls can't be determined
+until runtime.
+
+* No static info means we can't determine if a method even exists until runtime.
+
+* eval can create classes and methods at runtime
+
+... so a static php executable needs to contain a substantial runtime environment.
+
+------------------------------------------------------------------
+
+Three Address Code (TAC) operations:
+
+* assignment with arithmetic:
+	+,-,*,/,%
+	
+* the operation int y = x can be translated assignment
+	y = 0 - x, or
+	y = -1 * x
+	
+* legal operators for bools:
+	<, ==, ||, &&
+	
+* conditional operator:
+	Goto, If_Z <var> Goto <label>
+	
+* Operations for function call/definitions:
+	BeginFunc <size of locals/temps in bytes>
+	EndFunc
+	PushParam <arg>
+	LCall <fctn label>
+	ACall <function address> 
+	PopParams <number of bytes of args to pop>
+	
+* To call a function, you need to
+	1) Push Params one by one (remember, "this" is a first parameter)
+	2) Make ACall/LCall
+	3) PopParams
+	
+* To create an object and make a function call, you need to
+	1) allocate space for the object
+	2) set the vtable
+	3) load the function
+	4) call the function.
+	
+* Params begin at fp + 4 and go up
+
+* Locals/temp begin at fp - 8 and go down
+	
+* Note, the MIPS register "ra" stores the function return address
+
+* Note, the MIPS register "gp" points to the beginning of globally accessible
+storage.
+
+-----------------------------------------------------------------
+
+Optimizations
+-------------
+
+Defn. A Basic Block is a sequence of instructions such that
+* control only ever enters the block at one point (the top)
+* control leaves at one point
+
+Defn. A Control Flow Graph (CFG) is a graph of the program's
+instructions partitioned into basic block, with edges denoting
+possible paths of execution
+
+Defn. A local optimization is an optimization that works on one basic block.
+
+Defn. A global optimization is an optimization that works on the CFG.
+
+Defn. An interprocedural optimization optimizes across the CFG of multiple
+functions.
+
+-----------------------------------------------------------------
+
+Common Sub-expression Elimination:
+
+If we have
+
+v_1 = a op b
+...
+v_2 = a op b
+
+and v_1, a, b are unchanged between the first and second assignment,
+then we can change the code to
+
+v_1 = a op b
+...
+v_2 = v_1
+
+without changing the behaviour.
+
+------------------------------------------------------------------
+
+Copy Propagation:
+
+If we have
+
+v_1 = v_2
+...
+a = ... v_1 ...
+
+and v_1, v_2 are unchanged between the first and second assignment,
+then we can change the code to
+
+v_1 = v_2
+...
+a = ... v_2 ...
+
+without changing the behaviour.
+
+------------------------------------------------------------------
+
+Dead Code Elimination:
+
+the variable v is dead p.t. v isn't read before being re-assigned.
+
+The "dead assignment" of a dead variable can be removed.
+
+-----------------------------------------------------------------
+
+Arithmetic Simplification:
+
+Some primitive operations are usually faster/cheaper than others on some processors.
+
+EG: x = x * 4 can become x = x << 2
+
+----------------------------------------------------------------
+
+Constant Folding:
+
+constants can be evaluated at compile time.
+
+---------------------------------------------------------------
+
+Available Expressions:
+
+An expression (eg: a op b) is available provided that some variable in the
+present scope holds the value of the expression (think common sub-expression elimination).
+
+---------------------------------------------------------------
+
+A General Framework:
+
+We can describe the above analyses of the CFG as a 4-tuple (D,V,F,I) where
+* D is the direction of the analysis (forwards or backwards)
+* V is the set of possible values in a program
+* F : V -> V is the transfer function, and
+* I is the info at the top of a basic block.
+
+For each basic block S, there are sets IN[S], OUT[S] denoting the values held by the analysis before and after the block executes, respectively.
+
+We want that our analysis forms a distributive lattice, for in this case we can
+describe a a generic approach to computing the analysis (eg: live variables)
+in finite time.
+
+* [For forwards analyses] we want our analysis to respect either
+	IN[S] = \cup_{p a pred of S} OUT[P]
+	IN[S] = \cap_{p a pred of S} OUT[P]
+
+These are called may and must analyses respectively.
+For may analyses, we want our IN sets to hold values by some incoming
+path of execution.
+For must analyses, we want our IN sets to hold values held by all possible
+incoming paths of execution.
+
+
+* We want our transfer function to resemble, at a block S, the following "gen-kill" form:
+F(x) = gen_S \cup (x - kill_S).
+
+Where gen_S, kill_S can be described generically.
+
+(see book for examples)
