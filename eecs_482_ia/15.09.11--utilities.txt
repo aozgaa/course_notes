@@ -159,6 +159,10 @@ the time of the crash
 Tell your OS you want to generate core dumps, and they can be big
 > ulimit -c unlimited
 
+Compile your program with debug symbols, so you'll be able to get all of gdb's
+goodness.
+> g++ <blah blah blah> -g
+
 Generate a core dump
 > ./myapp <args> # run the application on inputs that cause it to crash
 ... or...
