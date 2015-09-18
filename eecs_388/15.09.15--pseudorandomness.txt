@@ -1,0 +1,111 @@
+# Randomness and Pseudorandomness
+
+Q: How can Alice send Bob a message with confidentiality?
+A: Pseudorandomness
+
+Defn. True Randomness is the output of a physical process that is inherently random.
+* relatively scarce and hard to get
+
+Defn. A pseudorandom generator (PRG) is a function that takes a small number of true random bits
+and generates more bits that are as good as random.
+* As good as random is defined analogously to PRF's:
+
+We have a game with Mallory a PPTM in the length of the secret random bits k:
+1) flip a coin secretly to get a bit b.
+2.a) if b == 0, output s a truly random stream of bits
+2.b) if b == 1, let s be the output of a PRF given a random secret k
+3) Mallory can see as much of s as s/he wants
+4) Mallory guesses b, wins if guesses correctly.
+
+the PRG is secure if Mallory guesses no better than a coin flip.
+
+Intuitively, a PRG is a function that isn't predictable
+(that is, we can't guess the next bits if we know the earlier bits)
+
+-------------------------------------------
+
+Theorem. Given a family of pseudorandom functions {f}, let
+g_k := f_k(0) || f_k(1) || f_k(2) || ...
+
+Then the family {g} is a PRG.
+
+Proof.
+1) Assume {g} is not secure.
+2) Then, Mallory has a winning strategy (aka PPTM algorithm) to win the PRG game.
+3) So, the following strategy wins the PRF game:
+a. Query the PRF with inputs 1,2,3, ...
+b. Apply the PRG-distinguishing algorithm, return the result.
+3) So f is not a pseudorandom function.
+
+----------------------------------
+
+Example: a Linear Congruential Number Generator (LCNG)
+* Produces statistically random numbers, but *not* cryptographically random numbers
+
+
+Let x_0 be two random bits.
+
+Let x_{i + 1} = 7 * x_i + 5 mod 17
+(7,5 are secret)
+
+1)
+Given
+x_0 = 1
+x_1 = 12
+x_2 = 4
+Find
+x_3
+
+a + b mod 17 = 12
+12a + b mod 17 = 4
+
+11a mod 17 = 8
+
+a = 10 mod 17
+
+Example 2: Another LCNG
+
+Let p be prime,
+a,c,x_0 \in [p] picked randomly
+
+Set
+x_{i + 1} = ax_i + c mod p
+
+1) Given {x_0,x_1,x_2,p} find x_i
+2) How often does this sequence repeat?
+x_0 = x_p
+3) How random is this?
+
+--------------------------------------
+
+Perks of randomness: confidentiality
+
+Alice has a plaintext p she wishes to send to Bob,
+with E_k,D_k encryption, decryption algorithms, respectively.
+k is the secret key, and c is the ciphertext that Eve can read.
+
+---------------------------------------
+
+One-time Pad
+
+Alice/Bob's key is randomly generated and XOR'd against blocks of the message
+
+Reusing the key lets the adversary learn the first message XOR'd against the second.
+
+---------------------------------------
+
+Instead of a key, we can use the output of a PRG.
+
+This is called a stream cipher:
+1) start with shared secret k
+2) Alice, Bob use k to seed PRG
+3) Alice XOR's message with PRG output
+4) Bob XOR's ciphertext with PRG to decrypt message.
+
+Works as long as the key is nor reused.
+
+
+
+
+
+

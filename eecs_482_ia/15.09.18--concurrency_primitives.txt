@@ -1,0 +1,43 @@
+Discussion 2:
+
+Homework solutions were covered in class -- we won't re-print them here.
+
+------------------------------------------------------------------------
+
+Useful concepts:
+
+* Process: running piece of code along with all the memory it can access
+* Thread: a sequence of execution instructions in a program.
+* Atomic: a computation step that appears to occur instantaneously to the 
+rest of the system
+* Critical Section: a sequence of computation steps the must appear atomic 
+in order to ensure correctness
+* Blocking: when a thread is waiting before continuing executing
+mutex: a concurrency primitive, only one thread can hold a lock at a time
+
+------------------------------------------------------------------------
+
+Concurrency interface:
+
+thread() -- creates a new thread of execution, starts running it concurrently
+thread::join() -- block the current thread until the target thread finishes
+
+mutex::lock() -- acquire the mutex or block until you can obtain it
+mutex::unlock() -- release the mutex, allowing another thread (or possibly later this one) to obtain it.
+
+cv::wait(mutex) -- block execution until woken by another thread or a spurious wakeup, give up the mutex
+* when woken, the calling thread will reposses the mutex.
+
+cv::signal() -- Wake some thread waiting on the cv
+* note that the caller does NOT give up a mutex
+* the signalled thread may still be waiting to re-acquire the lock they surrendered
+
+cv::broadcast() -- like signal, but wakes all threads waiting on the cv
+
+**
+Note: a thread waiting on a cv can be woken without being signalled.
+This is called a spurious wakeup. See further:
+https://en.wikipedia.org/wiki/Spurious_wakeup
+**
+
+You will get many examples of how to write concurrent code using these primitives in lecture.

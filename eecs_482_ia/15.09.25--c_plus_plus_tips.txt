@@ -1,0 +1,131 @@
+C++ Tips
+------------------------------------------------------------------------
+
+Declarations and Instantiations in C/C++:
+
+we can declare functions at the top of a file.
+
+Code sample:
+
+int foo();
+
+// ...
+
+int foo() { return 1; }
+
+The definition allocates a function pointer corresponding to foo.
+Recall that a function call is literally 
+* a jump of the instruction ponter to a specific address,
+* allocating some stack space,
+* copying arguments,
+* and setting up a link address
+so the program can return to the call site at return time.
+
+We want one definition corresponding to potentially many declarations
+(across potentially many object files).
+
+We can do something analogous with variable declarations.
+Suppose many files want to share one global variable 'bool bit'.
+If we write 'bool bit' in the global namespace in each file,
+then each file will allocate static memory for 'bit',
+and there will be name conflicts at link time.
+
+In order to declare a variable WITHOUT ALLOCATING SPACE FOR IT,
+prefix the declaration with the extern keyword.
+If all declarations are extern, then at link time,
+the compiler will generate an error that no instantiation exists.
+The key is give EXACTLY ONE declaration that is not extern.
+
+---------------------------------------------------------------------
+
+Pimpl idiom: ** You will likely use this in project 2 **
+
+The header is exposed by library writers to library users.
+* In project 1, you are using a thread library that has opaque pointers.
+
+The library writer wants to build an abstraction, limiting how much of the implementation
+the library user can see; the user should only see the interface.
+
+The opaque pointer to implementation (pimpl) idiom is one way of hiding the implementation in the header.
+
+code sample:
+
+class Foo {
+	public:
+		Foo();
+
+		class impl; // a class declaration defined by the library, opaque to lib users.
+		impl* impl_ptr; // pointer to class instance, can't be dereferenced by lib users
+				// can use to add extra fields/methods needed to implement foo.
+};
+
+The implementer will need to separately provide a definition for Foo::impl
+(see above for an explanation of why)
+
+Syntax:
+
+// Foo_impl.h -- distributed to the library writer only, NOT the user
+
+class Foo::impl {
+	bool isFooAwesome;
+	// ...
+};
+
+------------------------------------------------------------
+
+Resource Acquisition is Initialization (RAII):
+(see also the wiki page.)
+
+* This is a discussion of "modern" c++ style (or at least my impression of it),
+a programming style that makes your programs cleaner and helps reduce boilerplate.
+** pros: cleaner code
+** cons: may obfuscate somewhat the functionality of the code
+
+"Every new should have a corresponding delete" -- someone
+
+In 482, limit your use of manual memory management. Either:
+1) Allocate on the stack,
+2) Let the STL handle it,
+3) Use unique/shared_ptr's
+4) If you got here, you are almost certainly doing it wrong.
+
+If a class has to manage dynamic memory (eg: those impl objects),
+then allocate in the constructor and delete in the destructor (and nowhere else).
+In this case, the state of the dynamically allocated object is constant (ie: allocated)
+throughout the lifetime of the object.
+
+When the class goes of out scope, its destructor is called, and the memory is freed.
+So, the lifetime of the dynamic object is tied to the lifetime of the instance of the class.
+
+Dynamic memory is just one type of resource we might want. Another we considered are locks:
+
+code sample:
+
+mutex L;
+
+class lock_guard {
+	lock_guard() { L.lock(); }
+	~lock_guard() { L.unlock(); }
+};
+
+Then the lifetime of a caller holding the lock is tied to the lifetime of the lockguard
+
+eg:
+
+void threadfunc(void* a) {
+
+	// do some stuff
+	
+	{ // we can open blocks anywhere
+		lock_guard guard; // acquires the lock
+
+		// ... critical section
+
+	} // destructs objects local to the enclosed scope, namely 'guard'
+	  // this frees the lock.
+
+	// do some more stuff
+}
+
+Then tracking whether we are in a critical section is reduced 
+to tracking which variables are in scope, which is a bit easier.k
