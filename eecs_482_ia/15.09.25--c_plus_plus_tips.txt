@@ -79,7 +79,7 @@ Resource Acquisition is Initialization (RAII):
 * This is a discussion of "modern" c++ style (or at least my impression of it),
 a programming style that makes your programs cleaner and helps reduce boilerplate.
 ** pros: cleaner code
-** cons: may obfuscate somewhat the functionality of the code
+** cons: may obfuscate somewhat the functionality of the code (subjective)
 
 "Every new should have a corresponding delete" -- someone
 
@@ -87,7 +87,8 @@ In 482, limit your use of manual memory management. Either:
 1) Allocate on the stack,
 2) Let the STL handle it,
 3) Use unique/shared_ptr's
-4) If you got here, you are almost certainly doing it wrong.
+4) Use manual RAII.
+5) If you got here, you are almost certainly doing it wrong.
 
 If a class has to manage dynamic memory (eg: those impl objects),
 then allocate in the constructor and delete in the destructor (and nowhere else).
@@ -97,14 +98,14 @@ throughout the lifetime of the object.
 When the class goes of out scope, its destructor is called, and the memory is freed.
 So, the lifetime of the dynamic object is tied to the lifetime of the instance of the class.
 
-Dynamic memory is just one type of resource we might want. Another we considered are locks:
+Dynamic memory is just one type of resource we might want. Another one is locks:
 
 code sample:
 
 mutex L;
 
 class lock_guard {
-	lock_guard() { L.lock(); }
+	lock_guard(mutex &L) { L.lock(); }
 	~lock_guard() { L.unlock(); }
 };
 
@@ -112,20 +113,30 @@ Then the lifetime of a caller holding the lock is tied to the lifetime of the lo
 
 eg:
 
+mutex m1;
+mutex m2;
+
 void threadfunc(void* a) {
 
-	// do some stuff
-	
-	{ // we can open blocks anywhere
-		lock_guard guard; // acquires the lock
+	lock_guard g1(m1);
 
-		// ... critical section
+	if(some_prop) {
+		return; // calls g1's destructor, releases m1!
+	}
+	
+	if(some_other_prop) {
+		throw std:exception ("oops"); // calls g1's destructor, releases m1!
+	}
+	
+		
+	{ // we can open blocks anywhere
+		lock_guard g2(m2); // acquires the lock
 
 	} // destructs objects local to the enclosed scope, namely 'guard'
 	  // this frees the lock.
-
-	// do some more stuff
-}
+	
+	// do some stuff...
+} // calls g1's destructor, releases m1!
 
 Then tracking whether we are in a critical section is reduced 
 to tracking which variables are in scope, which is a bit easier.k
